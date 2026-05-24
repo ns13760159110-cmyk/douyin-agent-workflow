@@ -69,6 +69,19 @@ button.main:disabled{opacity:.5;cursor:not-allowed}
 .comment-send:hover{background:#333;color:#fff}
 .comment-bar{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 .comment-stats{font-size:12px;color:#666;margin-top:4px}
+.monitor-item{background:#0f0f0f;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #2a2a2a}
+.monitor-title{font-size:14px;font-weight:600;color:#fff;margin-bottom:6px}
+.monitor-meta{font-size:11px;color:#555;margin-bottom:8px}
+.monitor-stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.monitor-stat{font-size:13px;color:#ddd}
+.monitor-stat span{color:#fe2c55;font-weight:600}
+.monitor-actions{display:flex;gap:8px}
+.monitor-actions button{flex:1;padding:6px;border-radius:6px;border:1px solid #333;background:#1a1a1a;color:#aaa;font-size:11px;cursor:pointer}
+.monitor-actions button:hover{background:#2a2a2a;color:#fff}
+.trend-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12px}
+.trend-table th{color:#888;padding:4px 6px;text-align:left;border-bottom:1px solid #2a2a2a}
+.trend-table td{color:#ccc;padding:4px 6px;border-bottom:1px solid #1a1a1a}
+.trend-table tr.latest td{color:#fff;background:rgba(254,44,85,.1);font-weight:600}
 </style>
 </head>
 <body>
@@ -84,6 +97,7 @@ button.main:disabled{opacity:.5;cursor:not-allowed}
   <div class="tab" data-idx="4">📦 批量</div>
   <div class="tab" data-idx="5">📋 历史</div>
   <div class="tab" data-idx="6">📎 链接抓取</div>
+  <div class="tab" data-idx="7">📊 监控</div>
 </div>
 
 <!-- 面板0-2: 单工作流 -->
@@ -174,6 +188,26 @@ button.main:disabled{opacity:.5;cursor:not-allowed}
   </div>
 </div>
 
+<!-- 面板7: 数据监控 -->
+<div class="panel" id="panel7" style="display:none">
+  <div class="card">
+    <div class="section-title">➕ 添加监控</div>
+    <textarea id="monitorUrl" placeholder="粘贴抖音视频链接..."></textarea>
+    <button class="main" onclick="addMonitor()">➕ 添加监控</button>
+    <div class="error" id="monitorError"></div>
+  </div>
+  <div class="card">
+    <div class="section-title">📋 监控列表<button class="clear-btn" onclick="refreshAllMonitors()">🔄 全部刷新</button></div>
+    <div id="monitorList"><div class="empty">暂无监控视频</div></div>
+  </div>
+  <div id="monitorTrend" style="display:none">
+    <div class="card">
+      <div class="section-title">📈 数据趋势</div>
+      <div id="trendContent"></div>
+    </div>
+  </div>
+</div>
+
 <script>
 var HOST = window.location.hostname;
 var API_URL = "http://"+HOST+"/v1/workflows/run";
@@ -191,7 +225,7 @@ function switchTab(idx) {
   currentTab = idx;
   var tabs = document.querySelectorAll("#tabBar .tab");
   tabs.forEach(function(t,i){ t.classList.toggle("active", i===idx); });
-  for(var i=0;i<7;i++) {
+  for(var i=0;i<8;i++) {
     var p = document.getElementById("panel"+i);
     if(p) {
       if(i===0) {
@@ -212,6 +246,7 @@ function switchTab(idx) {
     document.getElementById("singleLoading").style.display="none";
   }
   if(idx===5) loadHistory();
+  if(idx===7) loadMonitor();
 }
 document.getElementById("tabBar").addEventListener("click", function(e){
   var t = e.target.closest(".tab");
@@ -600,6 +635,108 @@ function copyAllComments() {
     btn.textContent="已复制✓"; setTimeout(function(){ btn.textContent="📋 一键复制全部"; },1500);
   });
 }
+
+// === 数据监控模块 ===
+function loadMonitor() {
+  fetch(SERVER_URL+"/api/monitor/list")
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var el = document.getElementById("monitorList");
+      if(!data||data.length===0) { el.innerHTML='<div class="empty">暂无监控视频</div>'; return; }
+      var html="";
+      data.forEach(function(v){
+        var latest = v.latest || {};
+        html+='<div class="monitor-item">'+
+          '<div class="monitor-title">📹 '+esc(v.title||"未命名")+'</div>'+
+          '<div class="monitor-meta">添加于 '+esc(v.added||"")+' | 数据点: '+(v.history?v.history.length:0)+'</div>'+
+          '<div class="monitor-stats">'+
+            '<span class="monitor-stat">👍 <span>'+fmt(latest.likes)+'</span></span>'+
+            '<span class="monitor-stat">💬 <span>'+fmt(latest.comments)+'</span></span>'+
+            '<span class="monitor-stat">🔁 <span>'+fmt(latest.shares)+'</span></span>'+
+            '<span class="monitor-stat">⭐ <span>'+fmt(latest.collects)+'</span></span>'+
+          '</div>'+
+          '<div class="monitor-actions">'+
+            '<button onclick="refreshMonitor('+v.id+')">🔄 刷新</button>'+
+            '<button onclick="removeMonitor('+v.id+')">🗑️ 删除</button>'+
+            '<button onclick="showTrend('+v.id+')">📈 趋势</button>'+
+          '</div>'+
+        '</div>';
+      });
+      el.innerHTML=html;
+    })
+    .catch(function(){ document.getElementById("monitorList").innerHTML='<div class="error" style="display:block">加载失败</div>'; });
+}
+
+function addMonitor() {
+  var url = document.getElementById("monitorUrl").value.trim();
+  if(!url) { showErr("monitorError","请粘贴抖音链接"); return; }
+  hideErr("monitorError");
+  fetch(SERVER_URL+"/api/monitor/add", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({url:url, title:""})
+  }).then(function(r){ return r.json(); })
+    .then(function(data){
+      if(data.success) {
+        document.getElementById("monitorUrl").value="";
+        loadMonitor();
+      } else {
+        showErr("monitorError",data.error||"添加失败");
+      }
+    }).catch(function(e){ showErr("monitorError","请求失败"); });
+}
+
+function refreshMonitor(id) {
+  fetch(SERVER_URL+"/api/monitor/refresh", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({id:id})
+  }).then(function(r){ return r.json(); })
+    .then(function(){ loadMonitor(); });
+}
+
+function refreshAllMonitors() {
+  fetch(SERVER_URL+"/api/monitor/refresh_all")
+    .then(function(){ loadMonitor(); });
+}
+
+function removeMonitor(id) {
+  if(!confirm("确定删除该监控？")) return;
+  fetch(SERVER_URL+"/api/monitor/remove", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({id:id})
+  }).then(function(r){ return r.json(); })
+    .then(function(){ loadMonitor(); });
+}
+
+function showTrend(id) {
+  fetch(SERVER_URL+"/api/monitor/list")
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var v = data.find(function(item){ return item.id===id; });
+      if(!v || !v.history || v.history.length===0) return;
+      document.getElementById("monitorTrend").style.display="";
+      var h = v.history;
+      var html='<table class="trend-table"><tr><th>时间</th><th>👍点赞</th><th>💬评论</th><th>🔁分享</th><th>⭐收藏</th></tr>';
+      for(var i=h.length-1; i>=0; i--) {
+        var row = h[i];
+        var isLatest = (i===h.length-1);
+        html+='<tr class="'+(isLatest?'latest':'')+'">'+
+          '<td>'+esc(row.time||"")+'</td>'+
+          '<td>'+fmt(row.likes)+'</td>'+
+          '<td>'+fmt(row.comments)+'</td>'+
+          '<td>'+fmt(row.shares)+'</td>'+
+          '<td>'+fmt(row.collects)+'</td>'+
+        '</tr>';
+      }
+      html+='</table>';
+      document.getElementById("trendContent").innerHTML=html;
+      document.getElementById("monitorTrend").scrollIntoView({behavior:"smooth"});
+    });
+}
+
+function fmt(n) { return n!=null ? n.toLocaleString() : "—"; }
 
 switchTab(0);
 </script>

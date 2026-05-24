@@ -2,9 +2,13 @@
 import json
 import os
 import subprocess
+import time
+import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime
 import urllib.parse
+
+from monitor_manager import add_video, remove_video, refresh_video, refresh_all, get_all
 
 HISTORY_FILE = "/home/aoray/抖音智能体工作流/脚本/history.json"
 STATIC_DIR = "/home/aoray/抖音智能体工作流/脚本"
@@ -49,6 +53,20 @@ class Handler(BaseHTTPRequestHandler):
             self.send_cors()
             self.end_headers()
             self.wfile.write(b'{"ok":true}')
+        elif self.path == "/api/monitor/list":
+            data = get_all()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_cors()
+            self.end_headers()
+            self.wfile.write(json.dumps(data, ensure_ascii=False).encode())
+        elif self.path == "/api/monitor/refresh_all":
+            result = refresh_all()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_cors()
+            self.end_headers()
+            self.wfile.write(json.dumps(result, ensure_ascii=False).encode())
         elif self.path.startswith("/api/douyin/parse"):
             parsed = urllib.parse.urlparse(self.path)
             params = urllib.parse.parse_qs(parsed.query)
@@ -105,7 +123,34 @@ class Handler(BaseHTTPRequestHandler):
                 self.end_headers()
 
     def do_POST(self):
-        if self.path == "/api/history":
+        if self.path == "/api/monitor/add":
+            length = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(length).decode())
+            result = add_video(body.get("url", ""), body.get("title", ""))
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_cors()
+            self.end_headers()
+            self.wfile.write(json.dumps(result, ensure_ascii=False).encode())
+        elif self.path == "/api/monitor/remove":
+            length = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(length).decode())
+            result = remove_video(int(body.get("id", 0)))
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_cors()
+            self.end_headers()
+            self.wfile.write(json.dumps(result, ensure_ascii=False).encode())
+        elif self.path == "/api/monitor/refresh":
+            length = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(length).decode())
+            result = refresh_video(int(body.get("id", 0)))
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_cors()
+            self.end_headers()
+            self.wfile.write(json.dumps(result, ensure_ascii=False).encode())
+        elif self.path == "/api/history":
             length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(length)
             try:
@@ -146,6 +191,18 @@ def get_douyin_comments(url, cursor=0):
         return json.loads(result.stdout)
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+# 自动刷新线程：每小时采集一次所有监控视频的数据
+def _auto_refresh_loop():
+    while True:
+        time.sleep(3600)
+        try:
+            result = refresh_all()
+            print(f"[监控] 自动刷新完成: {result}")
+        except Exception as e:
+            print(f"[监控] 自动刷新失败: {e}")
+
+threading.Thread(target=_auto_refresh_loop, daemon=True).start()
 
 if __name__ == "__main__":
     port = 8088

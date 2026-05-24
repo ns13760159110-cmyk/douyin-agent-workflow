@@ -22,9 +22,23 @@ def parse(url: str) -> dict:
         if not result:
             return {"success": False, "error": "解析失败，视频可能已删除或链接无效"}
 
+        # 额外调一次 API 拿统计数据（parse_video 没有暴露 statistics）
+        video_id = result.get("aweme_id", "")
+        stats = {}
+        if video_id:
+            detail = parser.get_aweme_detail(video_id)
+            if detail:
+                s = (detail.get("aweme_detail") or {}).get("statistics") or {}
+                stats = {
+                    "likes": s.get("digg_count", 0),
+                    "comments": s.get("comment_count", 0),
+                    "shares": s.get("share_count", 0),
+                    "collects": s.get("collect_count", 0),
+                }
+
         return {
             "success": True,
-            "aweme_id": result.get("aweme_id", ""),
+            "aweme_id": video_id,
             "desc": result.get("desc", ""),
             "author": result.get("author_nickname", ""),
             "author_sec_uid": result.get("author_sec_uid", ""),
@@ -32,6 +46,7 @@ def parse(url: str) -> dict:
             "create_time": result.get("create_time", 0),
             "content_type": result.get("content_type", "video"),
             "video_url": result.get("nwm_url", ""),
+            "stats": stats,
         }
     except Exception as e:
         return {"success": False, "error": str(e)}
