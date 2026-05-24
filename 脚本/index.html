@@ -10,24 +10,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f0f0f;
 .logo{font-size:32px;margin-bottom:6px}
 h1{font-size:22px;font-weight:700;margin-bottom:4px}
 .sub{color:#888;font-size:13px;margin-bottom:24px}
-.tabs{display:flex;gap:8px;margin-bottom:20px;width:100%;max-width:680px}
-.tab{flex:1;padding:10px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;color:#888;font-size:13px;font-weight:600;cursor:pointer;text-align:center;transition:all 0.2s}
+.tabs{display:flex;gap:6px;margin-bottom:20px;width:100%;max-width:680px;flex-wrap:wrap}
+.tab{flex:1;min-width:80px;padding:10px 6px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;color:#888;font-size:12px;font-weight:600;cursor:pointer;text-align:center;transition:all .2s}
 .tab.active{background:#fe2c55;border-color:#fe2c55;color:#fff}
 .card{background:#1a1a1a;border-radius:16px;padding:24px;width:100%;max-width:680px;margin-bottom:16px;border:1px solid #2a2a2a}
 label{font-size:13px;color:#888;margin-bottom:8px;display:block}
 textarea{width:100%;background:#0f0f0f;border:1px solid #333;border-radius:10px;color:#fff;font-size:15px;padding:14px;resize:vertical;min-height:120px;outline:none;line-height:1.6}
 textarea:focus{border-color:#fe2c55}
 textarea::placeholder{color:#444}
-button.main{width:100%;padding:15px;background:linear-gradient(135deg,#fe2c55,#ff6b6b);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:14px;transition:opacity 0.2s}
-button.main:hover{opacity:0.9}
-button.main:disabled{opacity:0.5;cursor:not-allowed}
-.result-block{background:#0f0f0f;border-radius:10px;padding:14px;margin-top:12px;position:relative;border:1px solid #2a2a2a;display:none}
+button.main{width:100%;padding:15px;background:linear-gradient(135deg,#fe2c55,#ff6b6b);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:14px;transition:opacity .2s}
+button.main:hover{opacity:.9}
+button.main:disabled{opacity:.5;cursor:not-allowed}
+.result-block{background:#0f0f0f;border-radius:10px;padding:14px;margin-top:12px;position:relative;border:1px solid #2a2a2a}
 .result-label{font-size:12px;color:#fe2c55;margin-bottom:8px;font-weight:600}
-.result-text{font-size:14px;line-height:1.8;color:#eee;white-space:pre-wrap}
+.result-text{font-size:14px;line-height:1.8;color:#eee;white-space:pre-wrap;padding-right:50px}
 .copy-btn{position:absolute;top:12px;right:12px;background:#2a2a2a;border:none;color:#aaa;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer}
 .copy-btn:hover{background:#333;color:#fff}
 .loading{display:none;text-align:center;color:#888;padding:20px;font-size:14px}
-.spinner{display:inline-block;width:18px;height:18px;border:2px solid #333;border-top-color:#fe2c55;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:8px;vertical-align:middle}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid #333;border-top-color:#fe2c55;border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
 .error{color:#ff4444;font-size:13px;margin-top:10px;display:none;padding:10px;background:#2a0a0a;border-radius:8px}
 .hint{font-size:12px;color:#555;margin-top:8px;line-height:1.5}
@@ -43,132 +43,376 @@ button.main:disabled{opacity:0.5;cursor:not-allowed}
 .history-copy{background:#1a1a1a;border:none;color:#888;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;margin-top:8px}
 .history-copy:hover{color:#fff}
 .empty{text-align:center;color:#444;padding:30px;font-size:14px}
+.progress-bar{width:100%;background:#2a2a2a;border-radius:6px;height:6px;margin:12px 0;overflow:hidden;display:none}
+.progress-fill{height:100%;background:linear-gradient(90deg,#fe2c55,#ff6b6b);border-radius:6px;transition:width .4s;width:0}
+.batch-item{background:#0f0f0f;border-radius:8px;padding:12px;margin-bottom:8px;position:relative}
+.batch-item-label{font-size:11px;color:#fe2c55;margin-bottom:6px;font-weight:600}
+.batch-item-text{font-size:13px;color:#ddd;line-height:1.7;white-space:pre-wrap;padding-right:50px}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px}
+.dot-wait{background:#555}
+.dot-running{background:#ffaa00;animation:pulse 1s infinite}
+.dot-done{background:#00cc66}
+.dot-error{background:#ff4444}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.status-row{display:flex;align-items:center;font-size:13px;color:#888;padding:6px 0;border-bottom:1px solid #1a1a1a}
+.status-label{flex:1}
+.panel{width:100%;max-width:680px}
 </style>
 </head>
 <body>
 <div class="logo">🎬</div>
 <h1>抖音智能创作助手</h1>
-<p class="sub">文案改写 · 口播脚本 · 直播话术</p>
-<div class="tabs">
-<div class="tab active" onclick="switchTab(0)">✍️ 文案改写</div>
-<div class="tab" onclick="switchTab(1)">🎙️ 口播脚本</div>
-<div class="tab" onclick="switchTab(2)">📺 直播话术</div>
-<div class="tab" onclick="switchTab(3)">📋 历史记录</div>
+<p class="sub">文案改写 · 口播脚本 · 直播话术 · 批量生成</p>
+
+<div class="tabs" id="tabBar">
+  <div class="tab active" data-idx="0">✍️ 文案改写</div>
+  <div class="tab" data-idx="1">🎙️ 口播脚本</div>
+  <div class="tab" data-idx="2">📺 直播话术</div>
+  <div class="tab" data-idx="3">⚡ 三合一</div>
+  <div class="tab" data-idx="4">📦 批量</div>
+  <div class="tab" data-idx="5">📋 历史</div>
 </div>
-<div id="mainPanel">
-<div class="card">
-<label id="inputLabel">📋 原始文案</label>
-<textarea id="input" placeholder="把你想改写的文案粘贴到这里..."></textarea>
-<div class="hint" id="hint">输入原始文案，AI自动改写成抖音风格，并生成标题和话题标签</div>
-<button class="main" id="btn" onclick="generate()">🚀 开始生成</button>
-<div class="error" id="error"></div>
+
+<!-- 面板0-2: 单工作流 -->
+<div class="panel" id="panel0">
+  <div class="card">
+    <label id="singleLabel">📋 原始文案</label>
+    <textarea id="singleInput" placeholder="把你想改写的文案粘贴到这里..."></textarea>
+    <div class="hint" id="singleHint">输入原始文案，AI自动改写成抖音风格，并生成标题和话题标签</div>
+    <button class="main" id="singleBtn" onclick="runSingle()">🚀 开始生成</button>
+    <div class="error" id="singleError"></div>
+    <div class="loading" id="singleLoading"><span class="spinner"></span>AI 生成中...</div>
+    <div id="singleResults"></div>
+  </div>
 </div>
-<div class="card" id="resultCard" style="display:none">
-<div class="loading" id="loading"><span class="spinner"></span>AI生成中，请稍候...</div>
-<div id="results"></div>
+
+<!-- 面板3: 三合一 -->
+<div class="panel" id="panel3" style="display:none">
+  <div class="card">
+    <label>📦 产品信息</label>
+    <textarea id="threeInput" placeholder="输入产品信息，同时生成文案改写+口播脚本+直播话术"></textarea>
+    <div class="hint">一次输入，三种内容同时生成</div>
+    <button class="main" id="threeBtn" onclick="runThree()">⚡ 一键生成三合一</button>
+    <div class="error" id="threeError"></div>
+    <div class="progress-bar" id="threeProgress"><div class="progress-fill" id="threeFill"></div></div>
+    <div id="threeStatus" style="margin:12px 0;display:none">
+      <div class="status-row"><span class="status-dot dot-wait" id="threeDot0"></span><span class="status-label">✍️ 文案改写</span></div>
+      <div class="status-row"><span class="status-dot dot-wait" id="threeDot1"></span><span class="status-label">🎙️ 口播脚本</span></div>
+      <div class="status-row"><span class="status-dot dot-wait" id="threeDot2"></span><span class="status-label">📺 直播话术</span></div>
+    </div>
+  </div>
+  <div id="threeResults"></div>
 </div>
+
+<!-- 面板4: 批量 -->
+<div class="panel" id="panel4" style="display:none">
+  <div class="card">
+    <label>📦 多产品输入（每行一条）</label>
+    <textarea id="multiInput" style="min-height:160px" placeholder="儿童编程课，6-12岁，名师授课，限时8折&#10;亲子阅读绘本，0-6岁，全套50册，原价199现价99&#10;家庭教育课程，解决孩子拖延磨蹭，7天见效"></textarea>
+    <div class="hint">每行一个产品，逐条生成口播脚本</div>
+    <button class="main" id="multiBtn" onclick="runMulti()">📦 批量生成</button>
+    <div class="error" id="multiError"></div>
+    <div class="progress-bar" id="multiProgress"><div class="progress-fill" id="multiFill"></div></div>
+    <div id="multiStatus" style="margin:12px 0;font-size:13px;color:#888"></div>
+  </div>
+  <div id="multiResults"></div>
 </div>
-<div id="historyPanel" style="display:none;width:100%;max-width:680px">
-<div class="card">
-<div class="section-title">
-历史记录
-<button class="clear-btn" onclick="clearHistory()">清空</button>
+
+<!-- 面板5: 历史 -->
+<div class="panel" id="panel5" style="display:none">
+  <div class="card">
+    <div class="section-title">📋 历史记录<button class="clear-btn" onclick="clearHistory()">清空</button></div>
+    <div id="historyList"><div class="empty">暂无历史记录</div></div>
+  </div>
 </div>
-<div id="historyList"><div class="empty">暂无历史记录</div></div>
-</div>
-</div>
+
 <script>
+var HOST = window.location.hostname;
+var API_URL = "http://"+HOST+"/v1/workflows/run";
+var SERVER_URL = "http://"+HOST+":8088";
+
 var CONFIGS = [
-{key:"app-WawEE5glIGCLTFK52H3WJDn7",template:"文案改写",inputLabel:"📋 原始文案",placeholder:"把你想改写的文案粘贴到这里...",hint:"输入原始文案，AI自动改写成抖音风格，并生成标题和话题标签",inputVar:"original_text",outputs:[{var:"new_text",label:"✨ 改写后的文案"},{var:"title_and_tags",label:"🏷️ 标题 + 话题标签"}]},
-{key:"app-Q9nuwRHknypA2phViOwSxCR5",template:"口播脚本",inputLabel:"📦 产品信息",placeholder:"描述你的产品：名称、功能、卖点、价格、目标人群...",hint:"输入产品信息，AI生成30秒口播脚本，包含开场白、产品介绍、行动指引",inputVar:"product_info",outputs:[{var:"script",label:"🎙️ 口播脚本"}]},
-{key:"app-KX1NL4ioTWgEcaPAibpZCptv",template:"直播话术",inputLabel:"📦 产品信息",placeholder:"描述你的产品：名称、功能、卖点、价格、促销活动...",hint:"输入产品信息，AI生成完整直播话术，包含暖场、介绍、逼单、互动、催单",inputVar:"product_info",outputs:[{var:"live_script",label:"📺 直播话术"}]}
+  {key:"app-WawEE5glIGCLTFK52H3WJDn7", name:"文案改写", inputVar:"original_text", outputs:[{v:"new_text", label:"✨ 改写后的文案"},{v:"title_and_tags", label:"🏷️ 标题+话题标签"}], label:"📋 原始文案", ph:"把你想改写的文案粘贴到这里...", hint:"输入原始文案，AI自动改写成抖音风格，并生成标题和话题标签"},
+  {key:"app-Q9nuwRHknypA2phViOwSxCR5", name:"口播脚本", inputVar:"product_info", outputs:[{v:"script", label:"🎙️ 口播脚本"}], label:"📦 产品信息", ph:"描述你的产品：名称、功能、卖点、价格、目标人群...", hint:"输入产品信息，AI生成30秒口播脚本"},
+  {key:"app-KX1NL4ioTWgEcaPAibpZCptv", name:"直播话术", inputVar:"product_info", outputs:[{v:"live_script", label:"📺 直播话术"}], label:"📦 产品信息", ph:"描述你的产品：名称、功能、卖点、价格、促销活动...", hint:"输入产品信息，AI生成完整直播话术"}
 ];
 var currentTab = 0;
-var API_URL = "http://" + window.location.hostname + "/v1/workflows/run";
+
+// === Tab 切换 ===
 function switchTab(idx) {
-currentTab = idx;
-var tabs = document.querySelectorAll(".tab");
-for(var i=0;i<tabs.length;i++){tabs[i].classList.toggle("active",i===idx);}
-var isHistory = (idx === 3);
-document.getElementById("mainPanel").style.display = isHistory ? "none" : "";
-document.getElementById("historyPanel").style.display = isHistory ? "" : "none";
-if(isHistory){loadHistory();return;}
-var cfg = CONFIGS[idx];
-document.getElementById("inputLabel").textContent = cfg.inputLabel;
-document.getElementById("input").placeholder = cfg.placeholder;
-document.getElementById("hint").textContent = cfg.hint;
-document.getElementById("input").value = "";
-document.getElementById("resultCard").style.display = "none";
-document.getElementById("error").style.display = "none";
+  currentTab = idx;
+  var tabs = document.querySelectorAll("#tabBar .tab");
+  tabs.forEach(function(t,i){ t.classList.toggle("active", i===idx); });
+  for(var i=0;i<6;i++) {
+    var p = document.getElementById("panel"+i);
+    if(p) {
+      if(i===0) {
+        p.style.display = (idx<=2) ? "" : "none";
+      } else {
+        p.style.display = (i===idx) ? "" : "none";
+      }
+    }
+  }
+  if(idx===0||idx===1||idx===2) {
+    var cfg=CONFIGS[idx];
+    document.getElementById("singleLabel").textContent=cfg.label;
+    document.getElementById("singleInput").placeholder=cfg.ph;
+    document.getElementById("singleHint").textContent=cfg.hint;
+    document.getElementById("singleInput").value="";
+    document.getElementById("singleResults").innerHTML="";
+    document.getElementById("singleError").style.display="none";
+    document.getElementById("singleLoading").style.display="none";
+  }
+  if(idx===5) loadHistory();
 }
-async function generate() {
-var text = document.getElementById("input").value.trim();
-if(!text){showError("请先输入内容");return;}
-var cfg = CONFIGS[currentTab];
-var btn = document.getElementById("btn");
-var resultCard = document.getElementById("resultCard");
-btn.disabled=true;btn.textContent="生成中...";
-document.getElementById("error").style.display="none";
-resultCard.style.display="block";
-document.getElementById("loading").style.display="block";
-document.getElementById("results").innerHTML="";
-try{
-var payload={inputs:{},response_mode:"blocking",user:"web-user"};
-payload.inputs[cfg.inputVar]=text;
-var res=await fetch(API_URL,{method:"POST",headers:{"Authorization":"Bearer "+cfg.key,"Content-Type":"application/json"},body:JSON.stringify(payload)});
-var data=await res.json();
-var outputs=data.data && data.data.outputs;
-if(outputs){
-document.getElementById("loading").style.display="none";
-var html="";
-cfg.outputs.forEach(function(o){
-if(outputs[o.var]){
-html+='<div class="result-block" style="display:block"><div class="result-label">'+o.label+'</div><div class="result-text">'+escapeHtml(outputs[o.var])+'</div><button class="copy-btn" onclick="copyText(this)">复制</button></div>';
-}
+document.getElementById("tabBar").addEventListener("click", function(e){
+  var t = e.target.closest(".tab");
+  if(t) switchTab(parseInt(t.dataset.idx));
 });
-document.getElementById("results").innerHTML=html;
-saveToHistory(cfg.template, text, outputs);
-}else{throw new Error("返回数据异常");}
-}catch(e){
-document.getElementById("loading").style.display="none";
-showError("请求失败："+e.message);
+
+// === 单工作流 ===
+async function runSingle() {
+  var text = document.getElementById("singleInput").value.trim();
+  if(!text) { showErr("singleError","请先输入内容"); return; }
+  var cfg = CONFIGS[currentTab];
+  var btn = document.getElementById("singleBtn");
+  btn.disabled=true; btn.textContent="生成中...";
+  hideErr("singleError");
+  document.getElementById("singleLoading").style.display="block";
+  document.getElementById("singleResults").innerHTML="";
+  try {
+    var payload = { inputs:{}, response_mode:"blocking", user:"web-user" };
+    payload.inputs[cfg.inputVar] = text;
+    var res = await fetch(API_URL, {
+      method:"POST",
+      headers:{"Authorization":"Bearer "+cfg.key,"Content-Type":"application/json"},
+      body:JSON.stringify(payload)
+    });
+    var data = await res.json();
+    var outputs = data.data && data.data.outputs;
+    if(!outputs) throw new Error("返回数据异常");
+    document.getElementById("singleLoading").style.display="none";
+    var html="";
+    cfg.outputs.forEach(function(o){
+      if(outputs[o.v]) {
+        html+='<div class="result-block"><div class="result-label">'+o.label+'</div><div class="result-text" id="txt_'+o.v+'">'+esc(outputs[o.v])+'</div><button class="copy-btn" onclick="copyById(\'txt_'+o.v+'\',this)">复制</button></div>';
+      }
+    });
+    document.getElementById("singleResults").innerHTML=html;
+    saveHistory(cfg.name, text, outputs, cfg.outputs);
+  } catch(e) {
+    document.getElementById("singleLoading").style.display="none";
+    showErr("singleError","请求失败："+e.message);
+  }
+  btn.disabled=false; btn.textContent="🚀 开始生成";
 }
-btn.disabled=false;btn.textContent="🚀 开始生成";
+
+// === 三合一 ===
+async function runThree() {
+  var text = document.getElementById("threeInput").value.trim();
+  if(!text) { showErr("threeError","请先输入产品信息"); return; }
+  var btn = document.getElementById("threeBtn");
+  btn.disabled=true; btn.textContent="生成中...";
+  hideErr("threeError");
+  document.getElementById("threeResults").innerHTML="";
+  document.getElementById("threeStatus").style.display="block";
+
+  var dots = [document.getElementById("threeDot0"),document.getElementById("threeDot1"),document.getElementById("threeDot2")];
+  var bar = document.getElementById("threeProgress");
+  var fill = document.getElementById("threeFill");
+  dots.forEach(function(d){ d.className="status-dot dot-wait"; });
+  bar.style.display="block"; fill.style.width="0";
+  var done=0;
+
+  function markDone(i) {
+    done++;
+    fill.style.width = Math.round(done/3*100)+"%";
+    dots[i].className="status-dot dot-done";
+  }
+  function markErr(i) {
+    done++;
+    fill.style.width = Math.round(done/3*100)+"%";
+    dots[i].className="status-dot dot-error";
+  }
+
+  var tasks = CONFIGS.map(function(cfg,i) {
+    return (async function(){
+      dots[i].className="status-dot dot-running";
+      try {
+        var payload = { inputs:{}, response_mode:"blocking", user:"web-user" };
+        payload.inputs[cfg.inputVar] = text;
+        var res = await fetch(API_URL, {
+          method:"POST",
+          headers:{"Authorization":"Bearer "+cfg.key,"Content-Type":"application/json"},
+          body:JSON.stringify(payload)
+        });
+        var data = await res.json();
+        var outputs = data.data && data.data.outputs;
+        if(!outputs) throw new Error("返回异常");
+        markDone(i);
+        saveHistory(cfg.name, text, outputs, cfg.outputs);
+        return {cfg:cfg, outputs:outputs, ok:true};
+      } catch(e) {
+        markErr(i);
+        return {cfg:cfg, error:e.message, ok:false};
+      }
+    })();
+  });
+
+  var results = await Promise.all(tasks);
+
+  var html="";
+  results.forEach(function(r){
+    if(r.ok) {
+      html+='<div class="card"><div class="result-label">'+r.cfg.name+'</div>';
+      r.cfg.outputs.forEach(function(o){
+        if(r.outputs[o.v]) {
+          var id="three_"+r.cfg.inputVar+"_"+o.v;
+          html+='<div class="batch-item"><div class="batch-item-label">'+o.label+'</div><div class="batch-item-text" id="'+id+'">'+esc(r.outputs[o.v])+'</div><button class="copy-btn" onclick="copyById(\''+id+'\',this)">复制</button></div>';
+        }
+      });
+      html+='</div>';
+    } else {
+      html+='<div class="card"><div class="error" style="display:block">'+r.cfg.name+' 失败：'+r.error+'</div></div>';
+    }
+  });
+  document.getElementById("threeResults").innerHTML=html;
+  btn.disabled=false; btn.textContent="⚡ 一键生成三合一";
 }
-function saveToHistory(template, input, outputs) {
-var outputStr = "";
-var cfg = CONFIGS[currentTab];
-cfg.outputs.forEach(function(o){
-if(outputs[o.var]){outputStr += (outputStr?"\n\n":"") + outputs[o.var];}
-});
-fetch("/api/history",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({template:template,input:input,output:outputStr})});
+
+// === 批量 ===
+async function runMulti() {
+  var raw = document.getElementById("multiInput").value.trim();
+  if(!raw) { showErr("multiError","请先输入产品列表"); return; }
+  var lines = raw.split("\n").filter(function(l){ return l.trim(); });
+  if(lines.length===0) { showErr("multiError","没有有效产品"); return; }
+
+  var btn = document.getElementById("multiBtn");
+  btn.disabled=true; btn.textContent="生成中...";
+  hideErr("multiError");
+  document.getElementById("multiResults").innerHTML="";
+  document.getElementById("multiStatus").textContent="";
+
+  var bar = document.getElementById("multiProgress");
+  var fill = document.getElementById("multiFill");
+  var status = document.getElementById("multiStatus");
+  bar.style.display="block"; fill.style.width="0";
+
+  var results = [];
+  var cfg = CONFIGS[1]; // 口播脚本
+
+  for(var i=0; i<lines.length; i++) {
+    var line = lines[i].trim();
+    status.textContent = "正在生成 "+(i+1)+"/"+lines.length+"：…"+line.substring(0,20)+"…";
+    try {
+      var payload = { inputs:{}, response_mode:"blocking", user:"web-user" };
+      payload.inputs[cfg.inputVar] = line;
+      var res = await fetch(API_URL, {
+        method:"POST",
+        headers:{"Authorization":"Bearer "+cfg.key,"Content-Type":"application/json"},
+        body:JSON.stringify(payload)
+      });
+      var data = await res.json();
+      var outputs = data.data && data.data.outputs;
+      if(outputs) {
+        results.push({input:line, outputs:outputs, ok:true});
+        saveHistory(cfg.name, line, outputs, cfg.outputs);
+      } else {
+        results.push({input:line, error:"返回异常", ok:false});
+      }
+    } catch(e) {
+      results.push({input:line, error:e.message, ok:false});
+    }
+    fill.style.width = Math.round((i+1)/lines.length*100)+"%";
+  }
+
+  status.textContent = "全部完成！成功 "+results.filter(function(r){return r.ok;}).length+"/"+results.length+" 条";
+  var html="";
+  results.forEach(function(r,i){
+    html+='<div class="card"><div class="result-label">#'+(i+1)+' '+esc(r.input.substring(0,50))+'</div>';
+    if(r.ok) {
+      var id="multi_"+i;
+      html+='<div class="batch-item"><div class="batch-item-text" id="'+id+'">'+esc(r.outputs.script||"")+'</div><button class="copy-btn" onclick="copyById(\''+id+'\',this)">复制</button></div>';
+    } else {
+      html+='<div class="error" style="display:block">失败：'+r.error+'</div>';
+    }
+    html+='</div>';
+  });
+  document.getElementById("multiResults").innerHTML=html;
+  btn.disabled=false; btn.textContent="📦 批量生成";
 }
+
+// === 历史记录 ===
 function loadHistory() {
-fetch("/api/history").then(function(r){return r.json();}).then(function(data){
-var el=document.getElementById("historyList");
-if(!data||data.length===0){el.innerHTML='<div class="empty">暂无历史记录</div>';return;}
-var html="";
-data.forEach(function(h){
-var lines = h.input.length>80?h.input.substring(0,80)+"...":h.input;
-html+='<div class="history-item"><div class="history-meta"><span class="history-type">'+h.template+'</span><span class="history-time">'+h.time+'</span></div><div class="history-input">'+escapeHtml(lines)+'</div><div class="history-output">'+escapeHtml(h.output)+'</div><button class="history-copy" onclick="copyHistory(this)">复制</button></div>';
-});
-el.innerHTML=html;
-});
+  fetch(SERVER_URL+"/api/history")
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var el = document.getElementById("historyList");
+      if(!data||!Array.isArray(data)||data.length===0) {
+        el.innerHTML='<div class="empty">暂无历史记录</div>'; return;
+      }
+      var html="";
+      data.reverse().forEach(function(item){
+        var input = item.input||"";
+        var preview = input.length>80 ? input.substring(0,80)+"..." : input;
+        html+='<div class="history-item">'+
+          '<div class="history-meta"><span class="history-type">'+esc(item.template||"")+'</span><span class="history-time">'+esc(item.time||"")+'</span></div>'+
+          '<div class="history-input">'+esc(preview)+'</div>'+
+          '<div class="history-output">'+esc(item.output||"")+'</div>'+
+          '<button class="history-copy" onclick="copyRaw(this)" data-text="'+escAttr(item.output||"")+'">复制内容</button>'+
+        '</div>';
+      });
+      el.innerHTML=html;
+    })
+    .catch(function(){ document.getElementById("historyList").innerHTML='<div class="error" style="display:block">加载失败</div>'; });
 }
-function clearHistory() {
-if(!confirm("确认清空所有历史记录？"))return;
-fetch("/api/history/clear").then(function(){loadHistory();});
+
+function saveHistory(template, input, outputs, outDefs) {
+  var sb = [];
+  outDefs.forEach(function(o){ if(outputs[o.v]) sb.push(outputs[o.v]); });
+  var outputStr = sb.join("\n\n");
+  fetch(SERVER_URL+"/api/history", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({template:template, input:input, output:outputStr})
+  }).catch(function(){});
 }
-function copyText(btn){
-var div=btn.previousElementSibling;
-navigator.clipboard.writeText(div.textContent).then(function(){btn.textContent="已复制✓";setTimeout(function(){btn.textContent="复制";},1500);});
+
+async function clearHistory() {
+  if(!confirm("确定清空所有历史记录？")) return;
+  try { await fetch(SERVER_URL+"/api/history/clear"); } catch(e){}
+  loadHistory();
 }
-function copyHistory(btn){
-var div=btn.previousElementSibling;
-navigator.clipboard.writeText(div.textContent).then(function(){btn.textContent="已复制✓";setTimeout(function(){btn.textContent="复制";},1500);});
+
+// === 工具函数 ===
+function copyById(id, btn) {
+  var el = document.getElementById(id);
+  if(!el) return;
+  navigator.clipboard.writeText(el.textContent).then(function(){
+    btn.textContent="已复制✓"; setTimeout(function(){ btn.textContent="复制"; },1500);
+  });
 }
-function escapeHtml(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
-function showError(msg){var el=document.getElementById("error");el.textContent=msg;el.style.display="block";}
+function copyRaw(btn) {
+  var text = btn.getAttribute("data-text")||"";
+  navigator.clipboard.writeText(text).then(function(){
+    btn.textContent="已复制✓"; setTimeout(function(){ btn.textContent="复制内容"; },1500);
+  });
+}
+function esc(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function escAttr(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function showErr(id, msg) {
+  var el=document.getElementById(id);
+  el.textContent=msg; el.style.display="block";
+}
+function hideErr(id) {
+  document.getElementById(id).style.display="none";
+}
+
+switchTab(0);
 </script>
 </body>
 </html>
