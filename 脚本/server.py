@@ -1,6 +1,7 @@
 #!/usr/bin/env python3.12
 import json
 import os
+import subprocess
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime
 import urllib.parse
@@ -48,6 +49,23 @@ class Handler(BaseHTTPRequestHandler):
             self.send_cors()
             self.end_headers()
             self.wfile.write(b'{"ok":true}')
+        elif self.path.startswith("/api/douyin/parse"):
+            parsed = urllib.parse.urlparse(self.path)
+            params = urllib.parse.parse_qs(parsed.query)
+            url = params.get("url", [""])[0]
+            if not url:
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_cors()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success":False,"error":"缺少url参数"}, ensure_ascii=False).encode())
+            else:
+                result = parse_douyin(url)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_cors()
+                self.end_headers()
+                self.wfile.write(json.dumps(result, ensure_ascii=False).encode())
         else:
             path = self.path.split("?")[0]
             if path == "/" or path == "":
@@ -90,6 +108,16 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_response(500)
                 self.end_headers()
                 self.wfile.write(str(e).encode())
+
+def parse_douyin(url):
+    try:
+        result = subprocess.run(
+            ["python3.12", os.path.join(os.path.dirname(__file__), "douyin_api.py"), url],
+            capture_output=True, text=True, timeout=30
+        )
+        return json.loads(result.stdout)
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 if __name__ == "__main__":
     port = 8088

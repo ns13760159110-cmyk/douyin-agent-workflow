@@ -71,6 +71,7 @@ button.main:disabled{opacity:.5;cursor:not-allowed}
   <div class="tab" data-idx="3">⚡ 三合一</div>
   <div class="tab" data-idx="4">📦 批量</div>
   <div class="tab" data-idx="5">📋 历史</div>
+  <div class="tab" data-idx="6">📎 链接抓取</div>
 </div>
 
 <!-- 面板0-2: 单工作流 -->
@@ -126,6 +127,30 @@ button.main:disabled{opacity:.5;cursor:not-allowed}
   </div>
 </div>
 
+<!-- 面板6: 链接抓取 -->
+<div class="panel" id="panel6" style="display:none">
+  <div class="card">
+    <label>🔗 抖音视频链接</label>
+    <textarea id="dyUrl" placeholder="粘贴抖音视频链接或分享链接...&#10;例如：https://v.douyin.com/xxxxx&#10;或：https://www.douyin.com/video/xxxxx"></textarea>
+    <div class="hint">粘贴链接后点击提取，自动获取视频文案</div>
+    <button class="main" id="dyBtn" onclick="parseDouyin()">🔍 提取文案</button>
+    <div class="error" id="dyError"></div>
+    <div class="loading" id="dyLoading"><span class="spinner"></span>解析中...</div>
+    <div id="dyResult" style="display:none;margin-top:12px">
+      <div class="result-block" style="margin-bottom:8px">
+        <div class="result-label" id="dyTitle"></div>
+        <div class="result-text" id="dyAuthor" style="font-size:12px;color:#888;margin-bottom:8px"></div>
+        <div class="result-text" id="dyDesc" style="max-height:200px;overflow-y:auto"></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="main" style="flex:1;min-width:140px;font-size:13px;padding:12px" onclick="sendToTab(0)">✍️ 发送到文案改写</button>
+        <button class="main" style="flex:1;min-width:140px;font-size:13px;padding:12px" onclick="sendToTab(1)">🎙️ 发送到口播脚本</button>
+        <button class="main" style="flex:1;min-width:140px;font-size:13px;padding:12px" onclick="sendToTab(2)">📺 发送到直播话术</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 var HOST = window.location.hostname;
 var API_URL = "http://"+HOST+"/v1/workflows/run";
@@ -143,7 +168,7 @@ function switchTab(idx) {
   currentTab = idx;
   var tabs = document.querySelectorAll("#tabBar .tab");
   tabs.forEach(function(t,i){ t.classList.toggle("active", i===idx); });
-  for(var i=0;i<6;i++) {
+  for(var i=0;i<7;i++) {
     var p = document.getElementById("panel"+i);
     if(p) {
       if(i===0) {
@@ -410,6 +435,44 @@ function showErr(id, msg) {
 }
 function hideErr(id) {
   document.getElementById(id).style.display="none";
+}
+
+// === 抖音链接抓取 ===
+var dyResultCache = null;
+
+async function parseDouyin() {
+  var url = document.getElementById("dyUrl").value.trim();
+  if(!url) { showErr("dyError","请先粘贴抖音链接"); return; }
+  var btn = document.getElementById("dyBtn");
+  btn.disabled=true; btn.textContent="解析中...";
+  hideErr("dyError");
+  document.getElementById("dyResult").style.display="none";
+  document.getElementById("dyLoading").style.display="block";
+  dyResultCache = null;
+  try {
+    var api = SERVER_URL+"/api/douyin/parse?url="+encodeURIComponent(url);
+    var res = await fetch(api);
+    var data = await res.json();
+    document.getElementById("dyLoading").style.display="none";
+    if(!data.success) throw new Error(data.error||"解析失败");
+    dyResultCache = data;
+    document.getElementById("dyTitle").textContent = "📹 "+esc(data.desc||"无文案");
+    document.getElementById("dyAuthor").textContent = "👤 "+esc(data.author||"未知作者");
+    document.getElementById("dyDesc").textContent = data.desc||"";
+    document.getElementById("dyResult").style.display="block";
+  } catch(e) {
+    document.getElementById("dyLoading").style.display="none";
+    showErr("dyError","解析失败："+e.message);
+  }
+  btn.disabled=false; btn.textContent="🔍 提取文案";
+}
+
+function sendToTab(targetIdx) {
+  if(!dyResultCache || !dyResultCache.desc) return;
+  switchTab(targetIdx);
+  document.getElementById("singleInput").value = dyResultCache.desc;
+  // 滚动到输入框
+  document.getElementById("singleInput").scrollIntoView({behavior:"smooth"});
 }
 
 switchTab(0);
