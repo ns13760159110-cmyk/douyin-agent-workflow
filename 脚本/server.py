@@ -84,6 +84,54 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_cors()
                 self.end_headers()
                 self.wfile.write(json.dumps(result, ensure_ascii=False).encode())
+        elif self.path.startswith("/api/douyin/download"):
+            parsed = urllib.parse.urlparse(self.path)
+            params = urllib.parse.parse_qs(parsed.query)
+            url = params.get("url", [""])[0]
+            if not url:
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_cors()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": "缺少url参数"}, ensure_ascii=False).encode())
+            else:
+                import hashlib, requests
+                try:
+                    # 解析视频获取无水印链接
+                    parse_result = parse_douyin(url)
+                    if not parse_result.get("success"):
+                        self.send_response(400)
+                        self.send_header("Content-Type", "application/json; charset=utf-8")
+                        self.send_cors()
+                        self.end_headers()
+                        self.wfile.write(json.dumps(parse_result, ensure_ascii=False).encode())
+                        return
+                    video_url = parse_result.get("video_url", "")
+                    if not video_url:
+                        self.send_response(400)
+                        self.send_header("Content-Type", "application/json; charset=utf-8")
+                        self.send_cors()
+                        self.end_headers()
+                        self.wfile.write(json.dumps({"success": False, "error": "无法获取视频下载链接"}, ensure_ascii=False).encode())
+                        return
+                    # 下载视频
+                    vid = hashlib.md5(video_url.encode()).hexdigest()[:8]
+                    local_path = f"/tmp/douyin_{vid}.mp4"
+                    r = requests.get(video_url, headers={"User-Agent": "Mozilla/5.0", "Referer": "https://www.douyin.com/"}, timeout=60)
+                    with open(local_path, "wb") as f:
+                        f.write(r.content)
+                    size = os.path.getsize(local_path)
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.send_cors()
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"success": True, "video_path": local_path, "size": size, "desc": parse_result.get("desc", ""), "author": parse_result.get("author", "")}, ensure_ascii=False).encode())
+                except Exception as e:
+                    self.send_response(500)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.send_cors()
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode())
         elif self.path.startswith("/api/douyin/comments"):
             parsed = urllib.parse.urlparse(self.path)
             params = urllib.parse.parse_qs(parsed.query)
@@ -106,10 +154,23 @@ class Handler(BaseHTTPRequestHandler):
             path = self.path.split("?")[0]
             if path == "/" or path == "":
                 path = "/index.html"
+            # 优先检查 /tmp 下的文件（封面图片、音频等）
+            if path.startswith("/tmp/") and os.path.exists(path) and os.path.isfile(path):
+                ext = path.split(".")[-1]
+                types = {"jpg":"image/jpeg","jpeg":"image/jpeg","png":"image/png","mp3":"audio/mpeg","mp4":"video/mp4","srt":"text/plain"}
+                ct = types.get(ext, "application/octet-stream")
+                with open(path, "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", ct)
+                self.send_cors()
+                self.end_headers()
+                self.wfile.write(content)
+                return
             filepath = STATIC_DIR + path
             if os.path.exists(filepath) and os.path.isfile(filepath):
                 ext = filepath.split(".")[-1]
-                types = {"html":"text/html","js":"application/javascript","json":"application/json","css":"text/css"}
+                types = {"html":"text/html","js":"application/javascript","json":"application/json","css":"text/css","jpg":"image/jpeg","jpeg":"image/jpeg","png":"image/png","mp3":"audio/mpeg","mp4":"video/mp4"}
                 ct = types.get(ext, "text/plain") + "; charset=utf-8"
                 with open(filepath, "rb") as f:
                     content = f.read()
@@ -150,6 +211,51 @@ class Handler(BaseHTTPRequestHandler):
             self.send_cors()
             self.end_headers()
             self.wfile.write(json.dumps(result, ensure_ascii=False).encode())
+        elif self.path == "/api/tts":
+            length = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(length).decode())
+            text = body.get("text", "")
+            voice = body.get("voice", "晓晓（女，温柔）")
+            speed = body.get("speed", "+0%")
+            if text:
+                result = tts_generator.run(text, voice, output_path=f"/tmp/tts_{hash(text) & 0xFFFF}.mp3")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json;charset=utf-8")
+                self.send_cors()
+                self.end_headers()
+                self.wfile.write(json.dumps(result, ensure_ascii=False).encode())
+            else:
+                self.send_response(400)
+                self.end_headers()
+        elif self.path == "/api/cover":
+            length = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(length).decode())
+            video_path = body.get("video_path", "")
+            if video_path and os.path.exists(video_path):
+                result = cover_extractor.extract_cover(video_path)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json;charset=utf-8")
+                self.send_cors()
+                self.end_headers()
+                self.wfile.write(json.dumps(result, ensure_ascii=False).encode())
+            else:
+                self.send_response(400)
+                self.end_headers()
+        elif self.path == "/api/subtitle":
+            length = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(length).decode())
+            video_path = body.get("video_path", "")
+            if video_path and os.path.exists(video_path):
+                import subtitle_generator
+                result = subtitle_generator.process(video_path)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json;charset=utf-8")
+                self.send_cors()
+                self.end_headers()
+                self.wfile.write(json.dumps(result, ensure_ascii=False).encode())
+            else:
+                self.send_response(400)
+                self.end_headers()
         elif self.path == "/api/history":
             length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(length)
@@ -203,6 +309,22 @@ def _auto_refresh_loop():
             print(f"[监控] 自动刷新失败: {e}")
 
 threading.Thread(target=_auto_refresh_loop, daemon=True).start()
+
+# ===== 封面提取接口 =====
+import cover_extractor
+
+# ===== TTS 接口 =====
+import tts_generator
+
+# ===== 字幕生成接口 =====
+def handle_subtitle(self, video_path):
+    import subtitle_generator
+    result = subtitle_generator.process(video_path)
+    self.send_response(200)
+    self.send_header("Content-Type","application/json;charset=utf-8")
+    self.send_cors()
+    self.end_headers()
+    self.wfile.write(json.dumps(result,ensure_ascii=False).encode())
 
 if __name__ == "__main__":
     port = 8088

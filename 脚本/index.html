@@ -98,6 +98,7 @@ button.main:disabled{opacity:.5;cursor:not-allowed}
   <div class="tab" data-idx="5">📋 历史</div>
   <div class="tab" data-idx="6">📎 链接抓取</div>
   <div class="tab" data-idx="7">📊 监控</div>
+  <div class="tab" data-idx="8">🎬 视频处理</div>
 </div>
 
 <!-- 面板0-2: 单工作流 -->
@@ -208,6 +209,48 @@ button.main:disabled{opacity:.5;cursor:not-allowed}
   </div>
 </div>
 
+<div class="panel" id="panel8" style="display:none">
+  <div class="card">
+    <div class="section-title">🔗 粘贴抖音链接</div>
+    <textarea id="vpUrl" placeholder="粘贴抖音分享链接，如 https://v.douyin.com/xxx/"></textarea>
+    <button class="main" id="vpStartBtn" onclick="startVideoProcess()">🚀 一键处理</button>
+    <div class="error" id="vpError"></div>
+  </div>
+
+  <div class="card" id="vpStep1Card" style="display:none">
+    <div class="status-row"><span class="status-label"><span class="status-dot" id="vpDot1"></span>步骤1：解析视频</span><span id="vpStep1Status"></span></div>
+    <div id="vpStep1Info" style="margin-top:8px;font-size:13px;color:#ccc"></div>
+  </div>
+
+  <div class="card" id="vpStep2Card" style="display:none">
+    <div class="status-row"><span class="status-label"><span class="status-dot" id="vpDot2"></span>步骤2：提取封面</span><span id="vpStep2Status"></span></div>
+    <div id="vpCovers" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px"></div>
+  </div>
+
+  <div class="card" id="vpStep3Card" style="display:none">
+    <div class="status-row"><span class="status-label"><span class="status-dot" id="vpDot3"></span>步骤3：生成字幕</span><span id="vpStep3Status"></span></div>
+    <div id="vpSubtitleText" style="margin-top:8px;font-size:14px;color:#eee;line-height:1.8;white-space:pre-wrap"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="comment-send" onclick="sendToWorkflow('copywriting')" style="padding:8px 14px;font-size:13px">✍️ 发送到文案改写</button>
+      <button class="comment-send" onclick="sendToWorkflow('script')" style="padding:8px 14px;font-size:13px">🎙️ 发送到口播脚本</button>
+    </div>
+  </div>
+
+  <div class="card" id="vpStep4Card" style="display:none">
+    <div class="status-row"><span class="status-label"><span class="status-dot" id="vpDot4"></span>步骤4：生成语音</span><span id="vpStep4Status"></span></div>
+    <select id="vpVoice" style="margin-top:10px;background:#0f0f0f;color:#fff;border:1px solid #333;border-radius:8px;padding:8px;width:100%;font-size:14px">
+      <option>晓晓（女，温柔）</option>
+      <option>云扬（男，专业）</option>
+      <option>晓伊（女，活泼）</option>
+      <option>云夏（男，年轻）</option>
+      <option>云希（男，阳光）</option>
+    </select>
+    <textarea id="vpTtsText" style="margin-top:10px;min-height:80px" placeholder="可编辑的语音文本..."></textarea>
+    <button class="main" id="vpTtsBtn" onclick="generateVoice()">🎵 生成语音</button>
+    <div id="vpAudioPlayer" style="margin-top:12px"></div>
+  </div>
+</div>
+
 <script>
 var HOST = window.location.hostname;
 var API_URL = "http://"+HOST+"/v1/workflows/run";
@@ -225,7 +268,7 @@ function switchTab(idx) {
   currentTab = idx;
   var tabs = document.querySelectorAll("#tabBar .tab");
   tabs.forEach(function(t,i){ t.classList.toggle("active", i===idx); });
-  for(var i=0;i<8;i++) {
+  for(var i=0;i<9;i++) {
     var p = document.getElementById("panel"+i);
     if(p) {
       if(i===0) {
@@ -737,6 +780,106 @@ function showTrend(id) {
 }
 
 function fmt(n) { return n!=null ? n.toLocaleString() : "—"; }
+
+// === 视频处理 ===
+var vpVideoPath = "";
+var vpSubtitleText = "";
+
+function setDot(id, state) {
+  var d = document.getElementById(id);
+  d.className = "status-dot " + (state==="run"?"dot-running":state==="ok"?"dot-done":"dot-error");
+}
+
+async function startVideoProcess() {
+  var url = document.getElementById("vpUrl").value.trim();
+  if(!url) { showErr("vpError","请粘贴抖音链接"); return; }
+  hideErr("vpError");
+  document.getElementById("vpStartBtn").disabled = true;
+  document.getElementById("vpStartBtn").textContent = "处理中...";
+
+  // Show step cards
+  ["vpStep1Card","vpStep2Card","vpStep3Card","vpStep4Card"].forEach(function(id){ document.getElementById(id).style.display=""; });
+  ["vpStep1Info","vpStep2Status","vpStep3Status","vpStep4Status","vpSubtitleText","vpCovers","vpAudioPlayer"].forEach(function(id){ document.getElementById(id).innerHTML=""; });
+
+  // Step 1: 解析+下载
+  setDot("vpDot1","run"); document.getElementById("vpStep1Status").textContent="解析中...";
+  try {
+    var r1 = await fetch(SERVER_URL+"/api/douyin/download?url="+encodeURIComponent(url));
+    var d1 = await r1.json();
+    if(!d1.success) throw new Error(d1.error||"解析失败");
+    vpVideoPath = d1.video_path;
+    setDot("vpDot1","ok"); document.getElementById("vpStep1Status").textContent="✅ 完成";
+    document.getElementById("vpStep1Info").innerHTML = "📹 "+esc(d1.desc||"无标题")+"<br>👤 "+esc(d1.author||"")+"<br>📦 "+Math.round(d1.size/1024)+"KB";
+  } catch(e) {
+    setDot("vpDot1","err"); document.getElementById("vpStep1Status").textContent="❌ "+e.message;
+    document.getElementById("vpStartBtn").disabled=false; document.getElementById("vpStartBtn").textContent="🚀 一键处理"; return;
+  }
+
+  // Step 2: 提取封面
+  setDot("vpDot2","run"); document.getElementById("vpStep2Status").textContent="提取中...";
+  try {
+    var r2 = await fetch(SERVER_URL+"/api/cover", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({video_path:vpVideoPath})});
+    var d2 = await r2.json();
+    if(!d2.success) throw new Error(d2.error||"封面提取失败");
+    setDot("vpDot2","ok"); document.getElementById("vpStep2Status").textContent="✅ "+d2.covers.length+"张";
+    var coverHtml = "";
+    d2.covers.forEach(function(c,i){
+      var label = c.label||("候选"+(i+1));
+      coverHtml += '<div style="text-align:center;max-width:160px">'+
+        '<img src="'+c.path+'" style="width:100%;border-radius:8px;border:1px solid #333" onerror="this.style.display=\'none\'">'+
+        '<div style="font-size:11px;color:#888;margin:4px 0">'+esc(label)+' ('+c.time+'s)</div>'+
+        '<button onclick="selectCover(\''+c.path+'\')" style="background:#2a2a2a;border:none;color:#aaa;padding:3px 10px;border-radius:5px;font-size:11px;cursor:pointer">✅ 选为封面</button>'+
+        '</div>';
+    });
+    document.getElementById("vpCovers").innerHTML = coverHtml;
+  } catch(e) {
+    setDot("vpDot2","err"); document.getElementById("vpStep2Status").textContent="❌ "+e.message;
+  }
+
+  // Step 3: 生成字幕
+  setDot("vpDot3","run"); document.getElementById("vpStep3Status").textContent="Whisper转写中...";
+  try {
+    var r3 = await fetch(SERVER_URL+"/api/subtitle", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({video_path:vpVideoPath})});
+    var d3 = await r3.json();
+    if(!d3.success) throw new Error(d3.error||"字幕生成失败");
+    vpSubtitleText = d3.text||"";
+    setDot("vpDot3","ok"); document.getElementById("vpStep3Status").textContent="✅ "+d3.segments.length+"段";
+    document.getElementById("vpSubtitleText").textContent = vpSubtitleText;
+    document.getElementById("vpTtsText").value = vpSubtitleText;
+  } catch(e) {
+    setDot("vpDot3","err"); document.getElementById("vpStep3Status").textContent="❌ "+e.message;
+  }
+
+  document.getElementById("vpStartBtn").disabled = false;
+  document.getElementById("vpStartBtn").textContent = "🚀 一键处理";
+}
+
+function selectCover(path) { alert("已选择封面: "+path); }
+
+function sendToWorkflow(type) {
+  if(!vpSubtitleText) { alert("请先生成字幕"); return; }
+  switchTab(type==="copywriting"?0:1);
+  document.getElementById("singleInput").value = vpSubtitleText;
+  setTimeout(function(){ window.scrollTo(0,0); }, 200);
+}
+
+async function generateVoice() {
+  var text = document.getElementById("vpTtsText").value.trim();
+  if(!text) { alert("请输入语音文本"); return; }
+  var btn = document.getElementById("vpTtsBtn");
+  btn.disabled = true; btn.textContent = "生成中...";
+  setDot("vpDot4","run"); document.getElementById("vpStep4Status").textContent="语音合成中...";
+  try {
+    var r = await fetch(SERVER_URL+"/api/tts", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:text, voice:document.getElementById("vpVoice").value})});
+    var d = await r.json();
+    if(!d.success) throw new Error(d.error||"生成失败");
+    setDot("vpDot4","ok"); document.getElementById("vpStep4Status").textContent="✅ "+Math.round(d.size/1024)+"KB";
+    document.getElementById("vpAudioPlayer").innerHTML = '<audio controls style="width:100%;margin-top:8px"><source src="'+d.path+'" type="audio/mpeg"></audio>';
+  } catch(e) {
+    setDot("vpDot4","err"); document.getElementById("vpStep4Status").textContent="❌ "+e.message;
+  }
+  btn.disabled = false; btn.textContent = "🎵 生成语音";
+}
 
 switchTab(0);
 </script>
