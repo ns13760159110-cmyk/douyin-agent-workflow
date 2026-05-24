@@ -66,6 +66,24 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_cors()
                 self.end_headers()
                 self.wfile.write(json.dumps(result, ensure_ascii=False).encode())
+        elif self.path.startswith("/api/douyin/comments"):
+            parsed = urllib.parse.urlparse(self.path)
+            params = urllib.parse.parse_qs(parsed.query)
+            url = params.get("url", [""])[0]
+            cursor = int(params.get("cursor", ["0"])[0])
+            if not url:
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_cors()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success":False,"error":"缺少url参数"}, ensure_ascii=False).encode())
+            else:
+                result = get_douyin_comments(url, cursor)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_cors()
+                self.end_headers()
+                self.wfile.write(json.dumps(result, ensure_ascii=False).encode())
         else:
             path = self.path.split("?")[0]
             if path == "/" or path == "":
@@ -113,6 +131,16 @@ def parse_douyin(url):
     try:
         result = subprocess.run(
             ["python3.12", os.path.join(os.path.dirname(__file__), "douyin_api.py"), url],
+            capture_output=True, text=True, timeout=30
+        )
+        return json.loads(result.stdout)
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+def get_douyin_comments(url, cursor=0):
+    try:
+        result = subprocess.run(
+            ["python3.12", os.path.join(os.path.dirname(__file__), "douyin_api.py"), "comments", url, str(cursor)],
             capture_output=True, text=True, timeout=30
         )
         return json.loads(result.stdout)

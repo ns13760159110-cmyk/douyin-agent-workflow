@@ -57,6 +57,18 @@ button.main:disabled{opacity:.5;cursor:not-allowed}
 .status-row{display:flex;align-items:center;font-size:13px;color:#888;padding:6px 0;border-bottom:1px solid #1a1a1a}
 .status-label{flex:1}
 .panel{width:100%;max-width:680px}
+.comment-list{max-height:400px;overflow-y:auto;margin-top:8px}
+.comment-item{background:#0f0f0f;border-radius:8px;padding:10px 12px;margin-bottom:6px;border:1px solid #2a2a2a;position:relative}
+.comment-item.hot{border-color:#ffaa00;box-shadow:0 0 8px rgba(255,170,0,.15)}
+.comment-nick{font-size:12px;color:#fe2c55;font-weight:600;margin-bottom:4px}
+.comment-text{font-size:13px;color:#ddd;line-height:1.6;padding-right:80px;white-space:pre-wrap}
+.comment-meta{display:flex;justify-content:space-between;align-items:center;margin-top:4px}
+.comment-likes{font-size:11px;color:#888}
+.comment-likes.hot{color:#ffaa00}
+.comment-send{background:#2a2a2a;border:none;color:#aaa;padding:2px 8px;border-radius:5px;font-size:11px;cursor:pointer}
+.comment-send:hover{background:#333;color:#fff}
+.comment-bar{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.comment-stats{font-size:12px;color:#666;margin-top:4px}
 </style>
 </head>
 <body>
@@ -147,6 +159,17 @@ button.main:disabled{opacity:.5;cursor:not-allowed}
         <button class="main" style="flex:1;min-width:140px;font-size:13px;padding:12px" onclick="sendToTab(1)">🎙️ 发送到口播脚本</button>
         <button class="main" style="flex:1;min-width:140px;font-size:13px;padding:12px" onclick="sendToTab(2)">📺 发送到直播话术</button>
       </div>
+    </div>
+    <!-- 评论区 -->
+    <div id="dyCommentSection" style="display:none;margin-top:16px">
+      <div class="comment-bar">
+        <button class="main" style="flex:1;font-size:13px;padding:10px" id="loadCommentBtn" onclick="loadComments()">💬 加载评论</button>
+        <button class="clear-btn" style="padding:8px 12px;font-size:12px" onclick="copyAllComments()">📋 一键复制全部</button>
+      </div>
+      <div class="comment-stats" id="commentStats"></div>
+      <div class="comment-list" id="commentList"></div>
+      <button class="main" id="loadMoreBtn" style="display:none;margin-top:8px;font-size:13px;padding:10px" onclick="loadMoreComments()">⬇️ 加载更多评论</button>
+      <div class="loading" id="commentLoading" style="padding:10px"><span class="spinner"></span>加载中...</div>
     </div>
   </div>
 </div>
@@ -460,6 +483,13 @@ async function parseDouyin() {
     document.getElementById("dyAuthor").textContent = "👤 "+esc(data.author||"未知作者");
     document.getElementById("dyDesc").textContent = data.desc||"";
     document.getElementById("dyResult").style.display="block";
+    // 显示评论区模块，重置状态
+    document.getElementById("dyCommentSection").style.display="block";
+    document.getElementById("commentList").innerHTML="";
+    document.getElementById("commentStats").textContent="";
+    document.getElementById("loadMoreBtn").style.display="none";
+    commentCursor = 0; commentHasMore = false; allComments = [];
+    document.getElementById("loadCommentBtn").style.display="";
   } catch(e) {
     document.getElementById("dyLoading").style.display="none";
     showErr("dyError","解析失败："+e.message);
@@ -473,6 +503,102 @@ function sendToTab(targetIdx) {
   document.getElementById("singleInput").value = dyResultCache.desc;
   // 滚动到输入框
   document.getElementById("singleInput").scrollIntoView({behavior:"smooth"});
+}
+
+// === 评论模块 ===
+var commentCursor = 0;
+var commentHasMore = false;
+var allComments = [];
+var commentUrlCache = "";
+
+function loadComments() {
+  if(!dyResultCache) return;
+  var url = document.getElementById("dyUrl").value.trim();
+  commentUrlCache = url;
+  commentCursor = 0;
+  allComments = [];
+  document.getElementById("commentList").innerHTML="";
+  document.getElementById("commentLoading").style.display="block";
+  document.getElementById("loadMoreBtn").style.display="none";
+  document.getElementById("loadCommentBtn").style.display="none";
+  fetchComments(url, 0);
+}
+
+function loadMoreComments() {
+  if(!commentHasMore) return;
+  document.getElementById("commentLoading").style.display="block";
+  document.getElementById("loadMoreBtn").style.display="none";
+  fetchComments(commentUrlCache, commentCursor);
+}
+
+function fetchComments(url, cursor) {
+  fetch(SERVER_URL+"/api/douyin/comments?url="+encodeURIComponent(url)+"&cursor="+cursor)
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      document.getElementById("commentLoading").style.display="none";
+      if(!data.success) { showErr("dyError","评论加载失败："+data.error); return; }
+      commentCursor = data.cursor || 0;
+      commentHasMore = data.has_more || false;
+      var newComments = data.comments || [];
+      allComments = allComments.concat(newComments);
+      renderComments(newComments);
+      document.getElementById("commentStats").textContent =
+        "已加载 "+allComments.length+" 条"+(data.total?" / 共 "+data.total+" 条":"");
+      if(commentHasMore) {
+        document.getElementById("loadMoreBtn").style.display="";
+      }
+      document.getElementById("loadCommentBtn").style.display="none";
+    })
+    .catch(function(e){
+      document.getElementById("commentLoading").style.display="none";
+      showErr("dyError","评论加载失败："+e.message);
+    });
+}
+
+function renderComments(comments) {
+  var list = document.getElementById("commentList");
+  var html = "";
+  comments.forEach(function(c, i){
+    var isHot = c.likes > 5;
+    var hotClass = isHot ? " hot" : "";
+    var idx = allComments.length - comments.length + i;
+    html += '<div class="comment-item'+hotClass+'">'+
+      '<div class="comment-nick">'+esc(c.nickname||"匿名")+'</div>'+
+      '<div class="comment-text" id="cmt_'+idx+'">'+esc(c.text||"")+'</div>'+
+      '<div class="comment-meta">'+
+        '<span class="comment-likes'+hotClass+'">'+ (c.likes>0?"👍 "+c.likes:"") +'</span>'+
+        '<button class="comment-send" onclick="sendCommentToDify('+idx+')">发送到Dify</button>'+
+      '</div>'+
+    '</div>';
+    if(c.reply) {
+      html += '<div class="comment-item" style="margin-left:16px;border-left:2px solid #fe2c55">'+
+        '<div class="comment-nick" style="color:#ff6b6b">👤 作者回复</div>'+
+        '<div class="comment-text">'+esc(c.reply)+'</div>'+
+      '</div>';
+    }
+  });
+  list.insertAdjacentHTML("beforeend", html);
+}
+
+function sendCommentToDify(idx) {
+  if(idx < 0 || idx >= allComments.length) return;
+  var text = allComments[idx].text;
+  if(!text) return;
+  // 发送到口播脚本（tab 1）
+  switchTab(1);
+  document.getElementById("singleInput").value = text;
+  document.getElementById("singleInput").scrollIntoView({behavior:"smooth"});
+}
+
+function copyAllComments() {
+  if(allComments.length === 0) return;
+  var text = allComments.map(function(c, i){
+    return (i+1)+". "+c.nickname+"：\n"+c.text+"\n";
+  }).join("\n");
+  navigator.clipboard.writeText(text).then(function(){
+    var btn = event.target;
+    btn.textContent="已复制✓"; setTimeout(function(){ btn.textContent="📋 一键复制全部"; },1500);
+  });
 }
 
 switchTab(0);
