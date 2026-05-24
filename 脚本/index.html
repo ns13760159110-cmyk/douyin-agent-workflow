@@ -31,6 +31,18 @@ button.main:disabled{opacity:0.5;cursor:not-allowed}
 @keyframes spin{to{transform:rotate(360deg)}}
 .error{color:#ff4444;font-size:13px;margin-top:10px;display:none;padding:10px;background:#2a0a0a;border-radius:8px}
 .hint{font-size:12px;color:#555;margin-top:8px;line-height:1.5}
+.section-title{font-size:15px;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.clear-btn{background:none;border:1px solid #333;color:#888;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer}
+.clear-btn:hover{border-color:#fe2c55;color:#fe2c55}
+.history-item{background:#0f0f0f;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #2a2a2a}
+.history-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.history-type{font-size:11px;color:#fe2c55;font-weight:600;background:#2a0a0a;padding:2px 8px;border-radius:4px}
+.history-time{font-size:11px;color:#555}
+.history-input{font-size:12px;color:#666;margin-bottom:8px;line-height:1.5;border-left:2px solid #333;padding-left:8px}
+.history-output{font-size:13px;color:#ccc;line-height:1.7;white-space:pre-wrap}
+.history-copy{background:#1a1a1a;border:none;color:#888;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;margin-top:8px}
+.history-copy:hover{color:#fff}
+.empty{text-align:center;color:#444;padding:30px;font-size:14px}
 </style>
 </head>
 <body>
@@ -41,7 +53,9 @@ button.main:disabled{opacity:0.5;cursor:not-allowed}
 <div class="tab active" onclick="switchTab(0)">✍️ 文案改写</div>
 <div class="tab" onclick="switchTab(1)">🎙️ 口播脚本</div>
 <div class="tab" onclick="switchTab(2)">📺 直播话术</div>
+<div class="tab" onclick="switchTab(3)">📋 历史记录</div>
 </div>
+<div id="mainPanel">
 <div class="card">
 <label id="inputLabel">📋 原始文案</label>
 <textarea id="input" placeholder="把你想改写的文案粘贴到这里..."></textarea>
@@ -53,45 +67,32 @@ button.main:disabled{opacity:0.5;cursor:not-allowed}
 <div class="loading" id="loading"><span class="spinner"></span>AI生成中，请稍候...</div>
 <div id="results"></div>
 </div>
+</div>
+<div id="historyPanel" style="display:none;width:100%;max-width:680px">
+<div class="card">
+<div class="section-title">
+历史记录
+<button class="clear-btn" onclick="clearHistory()">清空</button>
+</div>
+<div id="historyList"><div class="empty">暂无历史记录</div></div>
+</div>
+</div>
 <script>
-const CONFIGS = [
-{
-key: "app-WawEE5glIGCLTFK52H3WJDn7",
-inputLabel: "📋 原始文案",
-placeholder: "把你想改写的文案粘贴到这里...",
-hint: "输入原始文案，AI自动改写成抖音风格，并生成标题和话题标签",
-inputVar: "original_text",
-outputs: [
-{var: "new_text", label: "✨ 改写后的文案"},
-{var: "title_and_tags", label: "🏷️ 标题 + 话题标签"}
-]
-},
-{
-key: "app-Q9nuwRHknypA2phViOwSxCR5",
-inputLabel: "📦 产品信息",
-placeholder: "描述你的产品：名称、功能、卖点、价格、目标人群...",
-hint: "输入产品信息，AI生成30秒口播脚本，包含开场白、产品介绍、行动指引",
-inputVar: "product_info",
-outputs: [
-{var: "script", label: "🎙️ 口播脚本"}
-]
-},
-{
-key: "app-KX1NL4ioTWgEcaPAibpZCptv",
-inputLabel: "📦 产品信息",
-placeholder: "描述你的产品：名称、功能、卖点、价格、促销活动...",
-hint: "输入产品信息，AI生成完整直播话术，包含暖场、介绍、逼单、互动、催单",
-inputVar: "product_info",
-outputs: [
-{var: "live_script", label: "📺 直播话术"}
-]
-}
+var CONFIGS = [
+{key:"app-WawEE5glIGCLTFK52H3WJDn7",template:"文案改写",inputLabel:"📋 原始文案",placeholder:"把你想改写的文案粘贴到这里...",hint:"输入原始文案，AI自动改写成抖音风格，并生成标题和话题标签",inputVar:"original_text",outputs:[{var:"new_text",label:"✨ 改写后的文案"},{var:"title_and_tags",label:"🏷️ 标题 + 话题标签"}]},
+{key:"app-Q9nuwRHknypA2phViOwSxCR5",template:"口播脚本",inputLabel:"📦 产品信息",placeholder:"描述你的产品：名称、功能、卖点、价格、目标人群...",hint:"输入产品信息，AI生成30秒口播脚本，包含开场白、产品介绍、行动指引",inputVar:"product_info",outputs:[{var:"script",label:"🎙️ 口播脚本"}]},
+{key:"app-KX1NL4ioTWgEcaPAibpZCptv",template:"直播话术",inputLabel:"📦 产品信息",placeholder:"描述你的产品：名称、功能、卖点、价格、促销活动...",hint:"输入产品信息，AI生成完整直播话术，包含暖场、介绍、逼单、互动、催单",inputVar:"product_info",outputs:[{var:"live_script",label:"📺 直播话术"}]}
 ];
-let currentTab = 0;
-const API_URL = "http://192.168.1.103/v1/workflows/run";
+var currentTab = 0;
+var API_URL = "http://" + window.location.hostname + "/v1/workflows/run";
 function switchTab(idx) {
 currentTab = idx;
-document.querySelectorAll(".tab").forEach(function(t,i) { t.classList.toggle("active", i===idx); });
+var tabs = document.querySelectorAll(".tab");
+for(var i=0;i<tabs.length;i++){tabs[i].classList.toggle("active",i===idx);}
+var isHistory = (idx === 3);
+document.getElementById("mainPanel").style.display = isHistory ? "none" : "";
+document.getElementById("historyPanel").style.display = isHistory ? "" : "none";
+if(isHistory){loadHistory();return;}
 var cfg = CONFIGS[idx];
 document.getElementById("inputLabel").textContent = cfg.inputLabel;
 document.getElementById("input").placeholder = cfg.placeholder;
@@ -105,34 +106,68 @@ var text = document.getElementById("input").value.trim();
 if(!text){showError("请先输入内容");return;}
 var cfg = CONFIGS[currentTab];
 var btn = document.getElementById("btn");
-var loading = document.getElementById("loading");
 var resultCard = document.getElementById("resultCard");
-var error = document.getElementById("error");
 btn.disabled=true;btn.textContent="生成中...";
-error.style.display="none";resultCard.style.display="block";
-loading.style.display="block";
+document.getElementById("error").style.display="none";
+resultCard.style.display="block";
+document.getElementById("loading").style.display="block";
 document.getElementById("results").innerHTML="";
 try{
-var res = await fetch(API_URL,{method:"POST",headers:{"Authorization":"Bearer "+cfg.key,"Content-Type":"application/json"},body:JSON.stringify({inputs:((function(){var o={};o[cfg.inputVar]=text;return o;})()),response_mode:"blocking",user:"web-user"})});
-var data = await res.json();
-var outputs = data.data ? data.data.outputs : null;
+var payload={inputs:{},response_mode:"blocking",user:"web-user"};
+payload.inputs[cfg.inputVar]=text;
+var res=await fetch(API_URL,{method:"POST",headers:{"Authorization":"Bearer "+cfg.key,"Content-Type":"application/json"},body:JSON.stringify(payload)});
+var data=await res.json();
+var outputs=data.data && data.data.outputs;
 if(outputs){
-loading.style.display="none";
+document.getElementById("loading").style.display="none";
 var html="";
 cfg.outputs.forEach(function(o){
 if(outputs[o.var]){
-html+='<div class="result-block" style="display:block"><div class="result-label">'+o.label+'</div><div class="result-text" id="out_'+o.var+'">'+outputs[o.var]+'</div><button class="copy-btn" onclick="copyContent(\'out_'+o.var+'\')">复制</button></div>';
+html+='<div class="result-block" style="display:block"><div class="result-label">'+o.label+'</div><div class="result-text">'+escapeHtml(outputs[o.var])+'</div><button class="copy-btn" onclick="copyText(this)">复制</button></div>';
 }
 });
 document.getElementById("results").innerHTML=html;
+saveToHistory(cfg.template, text, outputs);
 }else{throw new Error("返回数据异常");}
-}catch(e){loading.style.display="none";showError("请求失败："+e.message);}
-finally{btn.disabled=false;btn.textContent="🚀 开始生成";}
+}catch(e){
+document.getElementById("loading").style.display="none";
+showError("请求失败："+e.message);
 }
-function copyContent(id){
-var text = document.getElementById(id).textContent;
-navigator.clipboard.writeText(text).then(function(){event.target.textContent="已复制✓";setTimeout(function(){event.target.textContent="复制";},1500);});
+btn.disabled=false;btn.textContent="🚀 开始生成";
 }
+function saveToHistory(template, input, outputs) {
+var outputStr = "";
+var cfg = CONFIGS[currentTab];
+cfg.outputs.forEach(function(o){
+if(outputs[o.var]){outputStr += (outputStr?"\n\n":"") + outputs[o.var];}
+});
+fetch("/api/history",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({template:template,input:input,output:outputStr})});
+}
+function loadHistory() {
+fetch("/api/history").then(function(r){return r.json();}).then(function(data){
+var el=document.getElementById("historyList");
+if(!data||data.length===0){el.innerHTML='<div class="empty">暂无历史记录</div>';return;}
+var html="";
+data.forEach(function(h){
+var lines = h.input.length>80?h.input.substring(0,80)+"...":h.input;
+html+='<div class="history-item"><div class="history-meta"><span class="history-type">'+h.template+'</span><span class="history-time">'+h.time+'</span></div><div class="history-input">'+escapeHtml(lines)+'</div><div class="history-output">'+escapeHtml(h.output)+'</div><button class="history-copy" onclick="copyHistory(this)">复制</button></div>';
+});
+el.innerHTML=html;
+});
+}
+function clearHistory() {
+if(!confirm("确认清空所有历史记录？"))return;
+fetch("/api/history/clear").then(function(){loadHistory();});
+}
+function copyText(btn){
+var div=btn.previousElementSibling;
+navigator.clipboard.writeText(div.textContent).then(function(){btn.textContent="已复制✓";setTimeout(function(){btn.textContent="复制";},1500);});
+}
+function copyHistory(btn){
+var div=btn.previousElementSibling;
+navigator.clipboard.writeText(div.textContent).then(function(){btn.textContent="已复制✓";setTimeout(function(){btn.textContent="复制";},1500);});
+}
+function escapeHtml(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function showError(msg){var el=document.getElementById("error");el.textContent=msg;el.style.display="block";}
 </script>
 </body>
