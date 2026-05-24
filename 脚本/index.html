@@ -3,90 +3,137 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>抖音文案改写助手</title>
+<title>抖音智能创作助手</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f0f0f;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px}
-.logo{font-size:36px;margin-bottom:8px}
-h1{font-size:24px;font-weight:700;margin-bottom:6px}
-.sub{color:#888;font-size:14px;margin-bottom:40px}
-.card{background:#1a1a1a;border-radius:16px;padding:24px;width:100%;max-width:680px;margin-bottom:20px;border:1px solid #2a2a2a}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f0f0f;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:30px 16px}
+.logo{font-size:32px;margin-bottom:6px}
+h1{font-size:22px;font-weight:700;margin-bottom:4px}
+.sub{color:#888;font-size:13px;margin-bottom:24px}
+.tabs{display:flex;gap:8px;margin-bottom:20px;width:100%;max-width:680px}
+.tab{flex:1;padding:10px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;color:#888;font-size:13px;font-weight:600;cursor:pointer;text-align:center;transition:all 0.2s}
+.tab.active{background:#fe2c55;border-color:#fe2c55;color:#fff}
+.card{background:#1a1a1a;border-radius:16px;padding:24px;width:100%;max-width:680px;margin-bottom:16px;border:1px solid #2a2a2a}
 label{font-size:13px;color:#888;margin-bottom:8px;display:block}
-textarea{width:100%;background:#0f0f0f;border:1px solid #333;border-radius:10px;color:#fff;font-size:15px;padding:14px;resize:vertical;min-height:140px;outline:none;line-height:1.6}
+textarea{width:100%;background:#0f0f0f;border:1px solid #333;border-radius:10px;color:#fff;font-size:15px;padding:14px;resize:vertical;min-height:120px;outline:none;line-height:1.6}
 textarea:focus{border-color:#fe2c55}
-button.main{width:100%;padding:16px;background:linear-gradient(135deg,#fe2c55,#ff6b6b);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:16px;transition:opacity 0.2s}
+textarea::placeholder{color:#444}
+button.main{width:100%;padding:15px;background:linear-gradient(135deg,#fe2c55,#ff6b6b);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:14px;transition:opacity 0.2s}
 button.main:hover{opacity:0.9}
 button.main:disabled{opacity:0.5;cursor:not-allowed}
 .result-block{background:#0f0f0f;border-radius:10px;padding:14px;margin-top:12px;position:relative;border:1px solid #2a2a2a;display:none}
 .result-label{font-size:12px;color:#fe2c55;margin-bottom:8px;font-weight:600}
-.result-text{font-size:15px;line-height:1.7;color:#eee}
+.result-text{font-size:14px;line-height:1.8;color:#eee;white-space:pre-wrap}
 .copy-btn{position:absolute;top:12px;right:12px;background:#2a2a2a;border:none;color:#aaa;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer}
 .copy-btn:hover{background:#333;color:#fff}
 .loading{display:none;text-align:center;color:#888;padding:20px;font-size:14px}
-.spinner{display:inline-block;width:20px;height:20px;border:2px solid #333;border-top-color:#fe2c55;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:8px;vertical-align:middle}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid #333;border-top-color:#fe2c55;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:8px;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
-.error{color:#ff4444;font-size:14px;margin-top:12px;display:none}
+.error{color:#ff4444;font-size:13px;margin-top:10px;display:none;padding:10px;background:#2a0a0a;border-radius:8px}
+.hint{font-size:12px;color:#555;margin-top:8px;line-height:1.5}
 </style>
 </head>
 <body>
 <div class="logo">🎬</div>
-<h1>抖音文案改写助手</h1>
-<p class="sub">粘贴原始文案，一键生成新文案 + 标题 + 话题标签</p>
+<h1>抖音智能创作助手</h1>
+<p class="sub">文案改写 · 口播脚本 · 直播话术</p>
+<div class="tabs">
+<div class="tab active" onclick="switchTab(0)">✍️ 文案改写</div>
+<div class="tab" onclick="switchTab(1)">🎙️ 口播脚本</div>
+<div class="tab" onclick="switchTab(2)">📺 直播话术</div>
+</div>
 <div class="card">
-<label>📋 原始文案</label>
+<label id="inputLabel">📋 原始文案</label>
 <textarea id="input" placeholder="把你想改写的文案粘贴到这里..."></textarea>
-<button class="main" id="btn" onclick="rewrite()">🚀 开始改写</button>
+<div class="hint" id="hint">输入原始文案，AI自动改写成抖音风格，并生成标题和话题标签</div>
+<button class="main" id="btn" onclick="generate()">🚀 开始生成</button>
 <div class="error" id="error"></div>
 </div>
 <div class="card" id="resultCard" style="display:none">
-<div class="loading" id="loading"><span class="spinner"></span>正在改写中，请稍候...</div>
-<div id="results">
-<div class="result-block" id="block1">
-<div class="result-label">✨ 改写后的文案</div>
-<div class="result-text" id="newText"></div>
-<button class="copy-btn" onclick="copy('newText')">复制</button>
-</div>
-<div class="result-block" id="block2" style="margin-top:12px">
-<div class="result-label">🏷️ 标题 + 话题标签</div>
-<div class="result-text" id="titleTags"></div>
-<button class="copy-btn" onclick="copy('titleTags')">复制</button>
-</div>
-</div>
+<div class="loading" id="loading"><span class="spinner"></span>AI生成中，请稍候...</div>
+<div id="results"></div>
 </div>
 <script>
-const API_KEY="app-WawEE5glIGCLTFK52H3WJDn7";
-const API_URL="http://192.168.1.103/v1/workflows/run";
-async function rewrite(){
-const text=document.getElementById("input").value.trim();
-if(!text){showError("请先输入原始文案");return;}
-const btn=document.getElementById("btn");
-const loading=document.getElementById("loading");
-const resultCard=document.getElementById("resultCard");
-const error=document.getElementById("error");
-btn.disabled=true;btn.textContent="改写中...";
+const CONFIGS = [
+{
+key: "app-WawEE5glIGCLTFK52H3WJDn7",
+inputLabel: "📋 原始文案",
+placeholder: "把你想改写的文案粘贴到这里...",
+hint: "输入原始文案，AI自动改写成抖音风格，并生成标题和话题标签",
+inputVar: "original_text",
+outputs: [
+{var: "new_text", label: "✨ 改写后的文案"},
+{var: "title_and_tags", label: "🏷️ 标题 + 话题标签"}
+]
+},
+{
+key: "app-Q9nuwRHknypA2phViOwSxCR5",
+inputLabel: "📦 产品信息",
+placeholder: "描述你的产品：名称、功能、卖点、价格、目标人群...",
+hint: "输入产品信息，AI生成30秒口播脚本，包含开场白、产品介绍、行动指引",
+inputVar: "product_info",
+outputs: [
+{var: "script", label: "🎙️ 口播脚本"}
+]
+},
+{
+key: "app-KX1NL4ioTWgEcaPAibpZCptv",
+inputLabel: "📦 产品信息",
+placeholder: "描述你的产品：名称、功能、卖点、价格、促销活动...",
+hint: "输入产品信息，AI生成完整直播话术，包含暖场、介绍、逼单、互动、催单",
+inputVar: "product_info",
+outputs: [
+{var: "live_script", label: "📺 直播话术"}
+]
+}
+];
+let currentTab = 0;
+const API_URL = "http://192.168.1.103/v1/workflows/run";
+function switchTab(idx) {
+currentTab = idx;
+document.querySelectorAll(".tab").forEach(function(t,i) { t.classList.toggle("active", i===idx); });
+var cfg = CONFIGS[idx];
+document.getElementById("inputLabel").textContent = cfg.inputLabel;
+document.getElementById("input").placeholder = cfg.placeholder;
+document.getElementById("hint").textContent = cfg.hint;
+document.getElementById("input").value = "";
+document.getElementById("resultCard").style.display = "none";
+document.getElementById("error").style.display = "none";
+}
+async function generate() {
+var text = document.getElementById("input").value.trim();
+if(!text){showError("请先输入内容");return;}
+var cfg = CONFIGS[currentTab];
+var btn = document.getElementById("btn");
+var loading = document.getElementById("loading");
+var resultCard = document.getElementById("resultCard");
+var error = document.getElementById("error");
+btn.disabled=true;btn.textContent="生成中...";
 error.style.display="none";resultCard.style.display="block";
 loading.style.display="block";
-document.getElementById("block1").style.display="none";
-document.getElementById("block2").style.display="none";
+document.getElementById("results").innerHTML="";
 try{
-const res=await fetch(API_URL,{method:"POST",headers:{"Authorization":"Bearer "+API_KEY,"Content-Type":"application/json"},body:JSON.stringify({inputs:{original_text:text},response_mode:"blocking",user:"web-user"})});
-const data=await res.json();
-const outputs=data.data?.outputs;
+var res = await fetch(API_URL,{method:"POST",headers:{"Authorization":"Bearer "+cfg.key,"Content-Type":"application/json"},body:JSON.stringify({inputs:((function(){var o={};o[cfg.inputVar]=text;return o;})()),response_mode:"blocking",user:"web-user"})});
+var data = await res.json();
+var outputs = data.data ? data.data.outputs : null;
 if(outputs){
 loading.style.display="none";
-document.getElementById("newText").textContent=outputs.new_text||"";
-document.getElementById("titleTags").textContent=outputs.title_and_tags||"";
-document.getElementById("block1").style.display="block";
-document.getElementById("block2").style.display="block";
+var html="";
+cfg.outputs.forEach(function(o){
+if(outputs[o.var]){
+html+='<div class="result-block" style="display:block"><div class="result-label">'+o.label+'</div><div class="result-text" id="out_'+o.var+'">'+outputs[o.var]+'</div><button class="copy-btn" onclick="copyContent(\'out_'+o.var+'\')">复制</button></div>';
+}
+});
+document.getElementById("results").innerHTML=html;
 }else{throw new Error("返回数据异常");}
 }catch(e){loading.style.display="none";showError("请求失败："+e.message);}
-finally{btn.disabled=false;btn.textContent="🚀 开始改写";}
+finally{btn.disabled=false;btn.textContent="🚀 开始生成";}
 }
-function copy(id){
-const text=document.getElementById(id).textContent;
-navigator.clipboard.writeText(text).then(()=>{event.target.textContent="已复制✓";setTimeout(()=>event.target.textContent="复制",1500);});
+function copyContent(id){
+var text = document.getElementById(id).textContent;
+navigator.clipboard.writeText(text).then(function(){event.target.textContent="已复制✓";setTimeout(function(){event.target.textContent="复制";},1500);});
 }
-function showError(msg){const el=document.getElementById("error");el.textContent=msg;el.style.display="block";}
+function showError(msg){var el=document.getElementById("error");el.textContent=msg;el.style.display="block";}
 </script>
 </body>
 </html>
