@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>抖音文案改写助手</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f0f0f;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px}
+.logo{font-size:36px;margin-bottom:8px}
+h1{font-size:24px;font-weight:700;margin-bottom:6px}
+.sub{color:#888;font-size:14px;margin-bottom:40px}
+.card{background:#1a1a1a;border-radius:16px;padding:24px;width:100%;max-width:680px;margin-bottom:20px;border:1px solid #2a2a2a}
+label{font-size:13px;color:#888;margin-bottom:8px;display:block}
+textarea{width:100%;background:#0f0f0f;border:1px solid #333;border-radius:10px;color:#fff;font-size:15px;padding:14px;resize:vertical;min-height:140px;outline:none;line-height:1.6}
+textarea:focus{border-color:#fe2c55}
+button.main{width:100%;padding:16px;background:linear-gradient(135deg,#fe2c55,#ff6b6b);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:16px;transition:opacity 0.2s}
+button.main:hover{opacity:0.9}
+button.main:disabled{opacity:0.5;cursor:not-allowed}
+.result-block{background:#0f0f0f;border-radius:10px;padding:14px;margin-top:12px;position:relative;border:1px solid #2a2a2a;display:none}
+.result-label{font-size:12px;color:#fe2c55;margin-bottom:8px;font-weight:600}
+.result-text{font-size:15px;line-height:1.7;color:#eee}
+.copy-btn{position:absolute;top:12px;right:12px;background:#2a2a2a;border:none;color:#aaa;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer}
+.copy-btn:hover{background:#333;color:#fff}
+.loading{display:none;text-align:center;color:#888;padding:20px;font-size:14px}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid #333;border-top-color:#fe2c55;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error{color:#ff4444;font-size:14px;margin-top:12px;display:none}
+</style>
+</head>
+<body>
+<div class="logo">🎬</div>
+<h1>抖音文案改写助手</h1>
+<p class="sub">粘贴原始文案，一键生成新文案 + 标题 + 话题标签</p>
+<div class="card">
+<label>📋 原始文案</label>
+<textarea id="input" placeholder="把你想改写的文案粘贴到这里..."></textarea>
+<button class="main" id="btn" onclick="rewrite()">🚀 开始改写</button>
+<div class="error" id="error"></div>
+</div>
+<div class="card" id="resultCard" style="display:none">
+<div class="loading" id="loading"><span class="spinner"></span>正在改写中，请稍候...</div>
+<div id="results">
+<div class="result-block" id="block1">
+<div class="result-label">✨ 改写后的文案</div>
+<div class="result-text" id="newText"></div>
+<button class="copy-btn" onclick="copy('newText')">复制</button>
+</div>
+<div class="result-block" id="block2" style="margin-top:12px">
+<div class="result-label">🏷️ 标题 + 话题标签</div>
+<div class="result-text" id="titleTags"></div>
+<button class="copy-btn" onclick="copy('titleTags')">复制</button>
+</div>
+</div>
+</div>
+<script>
+const API_KEY="app-WawEE5glIGCLTFK52H3WJDn7";
+const API_URL="http://192.168.1.103/v1/workflows/run";
+async function rewrite(){
+const text=document.getElementById("input").value.trim();
+if(!text){showError("请先输入原始文案");return;}
+const btn=document.getElementById("btn");
+const loading=document.getElementById("loading");
+const resultCard=document.getElementById("resultCard");
+const error=document.getElementById("error");
+btn.disabled=true;btn.textContent="改写中...";
+error.style.display="none";resultCard.style.display="block";
+loading.style.display="block";
+document.getElementById("block1").style.display="none";
+document.getElementById("block2").style.display="none";
+try{
+const res=await fetch(API_URL,{method:"POST",headers:{"Authorization":"Bearer "+API_KEY,"Content-Type":"application/json"},body:JSON.stringify({inputs:{original_text:text},response_mode:"blocking",user:"web-user"})});
+const data=await res.json();
+const outputs=data.data?.outputs;
+if(outputs){
+loading.style.display="none";
+document.getElementById("newText").textContent=outputs.new_text||"";
+document.getElementById("titleTags").textContent=outputs.title_and_tags||"";
+document.getElementById("block1").style.display="block";
+document.getElementById("block2").style.display="block";
+}else{throw new Error("返回数据异常");}
+}catch(e){loading.style.display="none";showError("请求失败："+e.message);}
+finally{btn.disabled=false;btn.textContent="🚀 开始改写";}
+}
+function copy(id){
+const text=document.getElementById(id).textContent;
+navigator.clipboard.writeText(text).then(()=>{event.target.textContent="已复制✓";setTimeout(()=>event.target.textContent="复制",1500);});
+}
+function showError(msg){const el=document.getElementById("error");el.textContent=msg;el.style.display="block";}
+</script>
+</body>
+</html>
