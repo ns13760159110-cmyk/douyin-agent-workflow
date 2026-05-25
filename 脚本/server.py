@@ -165,6 +165,24 @@ class Handler(BaseHTTPRequestHandler):
             path = self.path.split("?")[0]
             if path == "/" or path == "":
                 path = "/index.html"
+            # /tmp_video 路由
+            if path.startswith("/tmp_video"):
+                parsed = urllib.parse.urlparse(self.path)
+                params = urllib.parse.parse_qs(parsed.query)
+                video_path = params.get("path", [""])[0]
+                if video_path and os.path.exists(video_path):
+                    with open(video_path, "rb") as f:
+                        content = f.read()
+                    self.send_response(200)
+                    self.send_header("Content-Type", "video/mp4")
+                    self.send_header("Content-Length", str(len(content)))
+                    self.send_cors()
+                    self.end_headers()
+                    self.wfile.write(content)
+                else:
+                    self.send_response(404)
+                    self.end_headers()
+                return
             # 优先检查 /tmp 下的文件（封面图片、音频等）
             if path.startswith("/tmp/") and os.path.exists(path) and os.path.isfile(path):
                 ext = path.split(".")[-1]
@@ -293,6 +311,26 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 self.send_response(400)
                 self.end_headers()
+        elif self.path == "/api/merge":
+            length = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(length).decode())
+            video_path = body.get("video_path", "")
+            audio_path = body.get("audio_path", "")
+            output_path = f"/tmp/merged_{hash(video_path+audio_path) & 0xFFFF}.mp4"
+            try:
+                final = auto_create.combine_video(video_path, audio_path, output_path)
+                size = os.path.getsize(final)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json;charset=utf-8")
+                self.send_cors()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success":True, "path":final, "video_url":"/tmp_video?path="+urllib.parse.quote(final), "size":size}, ensure_ascii=False).encode())
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json;charset=utf-8")
+                self.send_cors()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success":False, "error":str(e)}, ensure_ascii=False).encode())
         elif self.path == "/api/history":
             length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(length)

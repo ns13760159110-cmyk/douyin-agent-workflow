@@ -297,6 +297,16 @@ input[type=range]{width:100%;margin-top:8px;accent-color:#fe2c55}
     <button class="main" id="vpTtsBtn" onclick="generateVoice()">🎵 生成语音</button>
     <div id="vpAudioPlayer" style="margin-top:12px"></div>
   </div>
+
+  <!-- 合成视频卡片 -->
+  <div id="vpMergeCard" style="display:none; margin-top:16px" class="card">
+    <button id="vpMergeBtn" class="main" style="display:none" onclick="mergeVideo()">🎬 合成最终视频</button>
+    <div id="vpMergeResult" style="display:none;margin-top:12px">
+      <div class="result-label">🎬 最终视频</div>
+      <video id="vpFinalVideo" controls style="width:100%;border-radius:10px;margin-top:8px"></video>
+      <a id="vpDownloadLink" style="display:block;text-align:center;margin-top:8px;color:#fe2c55">⬇️ 下载视频</a>
+    </div>
+  </div>
 </div>
 
 <!-- 子1：一键成片（新增） -->
@@ -979,6 +989,8 @@ async function startVideoProcess() {
 
   ["vpStep1Card","vpStep2Card","vpStep3Card","vpStep4Card"].forEach(function(id){ document.getElementById(id).style.display=""; });
   ["vpStep1Info","vpStep2Status","vpStep3Status","vpStep4Status","vpSubtitleText","vpCovers","vpAudioPlayer"].forEach(function(id){ document.getElementById(id).innerHTML=""; });
+  document.getElementById("vpMergeCard").style.display="none";
+  document.getElementById("vpMergeResult").style.display="none";
 
   // Step 1: 解析+下载
   setDot("vpDot1","run"); document.getElementById("vpStep1Status").textContent="解析中...";
@@ -1065,10 +1077,42 @@ async function generateVoice() {
     if(!d.success) throw new Error(d.error||"生成失败");
     setDot("vpDot4","ok"); document.getElementById("vpStep4Status").textContent="✅ "+Math.round(d.size/1024)+"KB";
     document.getElementById("vpAudioPlayer").innerHTML = '<audio controls style="width:100%;margin-top:8px"><source src="'+d.path+'" type="audio/mpeg"></audio>';
+    // 保存音频路径，显示合成按钮
+    window._vpAudioPath = d.path;
+    var mergeCard = document.getElementById("vpMergeCard");
+    if(mergeCard) mergeCard.style.display = "";
+    var mergeBtn = document.getElementById("vpMergeBtn");
+    if(mergeBtn) mergeBtn.style.display = "";
   } catch(e) {
     setDot("vpDot4","err"); document.getElementById("vpStep4Status").textContent="❌ "+e.message;
   }
   btn.disabled = false; btn.textContent = "🎵 生成语音";
+}
+
+// === 合成视频 ===
+async function mergeVideo() {
+  if(!window._vpAudioPath) { alert("请先生成语音"); return; }
+  if(!vpVideoPath) { alert("视频路径丢失，请重新处理"); return; }
+  var btn = document.getElementById("vpMergeBtn");
+  btn.disabled = true; btn.textContent = "合成中...";
+  document.getElementById("vpMergeResult").style.display = "none";
+  try {
+    var r = await fetchWithTimeout(SERVER_URL+"/api/merge", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({video_path:vpVideoPath, audio_path:window._vpAudioPath})
+    }, 120000);
+    var d = await r.json();
+    if(!d.success) throw new Error(d.error||"合成失败");
+    document.getElementById("vpMergeResult").style.display = "";
+    document.getElementById("vpFinalVideo").src = d.video_url||d.path;
+    document.getElementById("vpDownloadLink").href = d.video_url||d.path;
+    document.getElementById("vpDownloadLink").download = "output.mp4";
+    document.getElementById("vpDownloadLink").textContent = "⬇️ 下载视频 ("+Math.round(d.size/1024)+"KB)";
+  } catch(e) {
+    alert("合成失败: "+e.message);
+  }
+  btn.disabled = false; btn.textContent = "🎬 合成最终视频";
 }
 
 // === 一键成片 ===
