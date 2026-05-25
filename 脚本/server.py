@@ -9,6 +9,10 @@ from datetime import datetime
 import urllib.parse
 
 from monitor_manager import add_video, remove_video, refresh_video, refresh_all, get_all
+import sys
+sys.path.insert(0, os.path.dirname(__file__))
+import bgm_mixer
+import auto_create
 
 HISTORY_FILE = "/home/aoray/抖音智能体工作流/脚本/history.json"
 STATIC_DIR = "/home/aoray/抖音智能体工作流/脚本"
@@ -150,6 +154,13 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_cors()
                 self.end_headers()
                 self.wfile.write(json.dumps(result, ensure_ascii=False).encode())
+        elif self.path == "/api/bgm/list":
+            data = bgm_mixer.list_bgm()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_cors()
+            self.end_headers()
+            self.wfile.write(json.dumps(data, ensure_ascii=False).encode())
         else:
             path = self.path.split("?")[0]
             if path == "/" or path == "":
@@ -227,6 +238,32 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 self.send_response(400)
                 self.end_headers()
+        elif self.path == "/api/auto_create":
+            length = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(length).decode())
+            url = body.get("url", "")
+            voice = body.get("voice", "晓晓（女，温柔）")
+            bgm = body.get("bgm", "轻快活泼")
+            bgm_vol = float(body.get("bgm_vol", 0.15))
+            result = auto_create.run_pipeline(url, voice, bgm, bgm_vol)
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_cors()
+            self.end_headers()
+            self.wfile.write(json.dumps(result, ensure_ascii=False).encode())
+        elif self.path == "/api/bgm/mix":
+            length = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(length).decode())
+            voice_path = body.get("voice_path", "")
+            bgm_path = body.get("bgm_path", "")
+            output_path = body.get("output_path", "/tmp/mixed_output.mp3")
+            bgm_vol = float(body.get("bgm_vol", 0.1))
+            result = bgm_mixer.mix_audio(voice_path, bgm_path, output_path, bgm_vol=bgm_vol)
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_cors()
+            self.end_headers()
+            self.wfile.write(json.dumps(result, ensure_ascii=False).encode())
         elif self.path == "/api/cover":
             length = int(self.headers.get("Content-Length", 0))
             body = json.loads(self.rfile.read(length).decode())

@@ -6,14 +6,30 @@
 <title>抖音智能创作助手</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f0f0f;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:30px 16px}
-.logo{font-size:32px;margin-bottom:6px}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f0f0f;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 16px 100px}
+.logo{font-size:32px;margin-bottom:4px}
 h1{font-size:22px;font-weight:700;margin-bottom:4px}
-.sub{color:#888;font-size:13px;margin-bottom:24px}
-.tabs{display:flex;gap:6px;margin-bottom:20px;width:100%;max-width:680px;flex-wrap:wrap}
-.tab{flex:1;min-width:80px;padding:10px 6px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;color:#888;font-size:12px;font-weight:600;cursor:pointer;text-align:center;transition:all .2s}
-.tab.active{background:#fe2c55;border-color:#fe2c55;color:#fff}
-.card{background:#1a1a1a;border-radius:16px;padding:24px;width:100%;max-width:680px;margin-bottom:16px;border:1px solid #2a2a2a}
+.sub{color:#888;font-size:13px;margin-bottom:20px}
+
+/* === 三大模块导航（桌面端横向 / 手机端底部固定） === */
+.module-tabs{display:flex;gap:8px;margin-bottom:14px;width:100%;max-width:680px}
+.module-tab{flex:1;padding:14px 10px;background:#1a1a1a;border:2px solid #2a2a2a;border-radius:14px;color:#888;font-size:15px;font-weight:700;cursor:pointer;text-align:center;transition:all .2s;min-width:100px}
+.module-tab.active{background:linear-gradient(135deg,#fe2c55,#cc2244);border-color:#fe2c55;color:#fff;box-shadow:0 4px 20px rgba(254,44,85,.3)}
+.module-tab:hover:not(.active){border-color:#444;color:#ccc}
+
+/* 子标签 */
+.sub-tabs{display:flex;gap:6px;margin-bottom:16px;width:100%;max-width:680px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+.sub-tabs::-webkit-scrollbar{height:2px}
+.sub-tabs::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+.sub-tab{flex-shrink:0;padding:8px 14px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:20px;color:#888;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.sub-tab.active{background:#fe2c55;border-color:#fe2c55;color:#fff}
+.sub-tab:hover:not(.active){border-color:#444;color:#ccc}
+
+/* === 面板容器 === */
+.panel-wrapper{width:100%;max-width:680px}
+
+/* === 原有样式（保留全部） === */
+.card{background:#1a1a1a;border-radius:16px;padding:24px;width:100%;margin-bottom:16px;border:1px solid #2a2a2a}
 label{font-size:13px;color:#888;margin-bottom:8px;display:block}
 textarea{width:100%;background:#0f0f0f;border:1px solid #333;border-radius:10px;color:#fff;font-size:15px;padding:14px;resize:vertical;min-height:120px;outline:none;line-height:1.6}
 textarea:focus{border-color:#fe2c55}
@@ -56,7 +72,6 @@ button.main:disabled{opacity:.5;cursor:not-allowed}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .status-row{display:flex;align-items:center;font-size:13px;color:#888;padding:6px 0;border-bottom:1px solid #1a1a1a}
 .status-label{flex:1}
-.panel{width:100%;max-width:680px}
 .comment-list{max-height:400px;overflow-y:auto;margin-top:8px}
 .comment-item{background:#0f0f0f;border-radius:8px;padding:10px 12px;margin-bottom:6px;border:1px solid #2a2a2a;position:relative}
 .comment-item.hot{border-color:#ffaa00;box-shadow:0 0 8px rgba(255,170,0,.15)}
@@ -82,80 +97,69 @@ button.main:disabled{opacity:.5;cursor:not-allowed}
 .trend-table th{color:#888;padding:4px 6px;text-align:left;border-bottom:1px solid #2a2a2a}
 .trend-table td{color:#ccc;padding:4px 6px;border-bottom:1px solid #1a1a1a}
 .trend-table tr.latest td{color:#fff;background:rgba(254,44,85,.1);font-weight:600}
+
+/* === 新增：一键成片样式 === */
+.auto-step{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid #1a1a1a}
+.auto-step-icon{width:24px;font-size:16px;text-align:center;margin-right:10px}
+.auto-step-label{flex:1;font-size:13px;color:#ccc}
+.auto-step-time{font-size:11px;color:#555}
+.auto-step-status{font-size:11px;font-weight:600;margin-left:8px;min-width:36px;text-align:right}
+.auto-step-status.ok{color:#00cc66}
+.auto-step-status.err{color:#ff4444}
+.auto-step-status.run{color:#ffaa00}
+select{background:#0f0f0f;color:#fff;border:1px solid #333;border-radius:8px;padding:8px;width:100%;font-size:14px}
+input[type=range]{width:100%;margin-top:8px;accent-color:#fe2c55}
+.cover-item{cursor:pointer;text-align:center;max-width:160px;padding:4px;border-radius:10px;border:2px solid transparent;transition:border-color .2s}
+.cover-item.selected{border-color:#fe2c55;background:rgba(254,44,85,.08)}
+.cover-item img{width:100%;border-radius:8px;display:block}
+
+/* === 手机端适配 === */
+@media(max-width:600px){
+  body{padding:16px 12px 120px}
+  .module-tabs{position:fixed;bottom:0;left:0;right:0;z-index:100;margin:0;padding:8px 12px 12px;background:linear-gradient(transparent,#0f0f0f 30%);max-width:none;gap:6px}
+  .module-tab{padding:12px 8px;font-size:13px;border-radius:12px}
+  .sub-tabs{margin-bottom:12px}
+  h1{font-size:18px}
+}
 </style>
 </head>
 <body>
 <div class="logo">🎬</div>
 <h1>抖音智能创作助手</h1>
-<p class="sub">文案改写 · 口播脚本 · 直播话术 · 批量生成</p>
+<p class="sub">文案改写 · 口播脚本 · 直播话术 · 一键成片</p>
 
-<div class="tabs" id="tabBar">
-  <div class="tab active" data-idx="0">✍️ 文案改写</div>
-  <div class="tab" data-idx="1">🎙️ 口播脚本</div>
-  <div class="tab" data-idx="2">📺 直播话术</div>
-  <div class="tab" data-idx="3">⚡ 三合一</div>
-  <div class="tab" data-idx="4">📦 批量</div>
-  <div class="tab" data-idx="5">📋 历史</div>
-  <div class="tab" data-idx="6">📎 链接抓取</div>
-  <div class="tab" data-idx="7">📊 监控</div>
-  <div class="tab" data-idx="8">🎬 视频处理</div>
+<!-- ===== 三大模块导航 ===== -->
+<div class="module-tabs" id="moduleBar">
+  <div class="module-tab active" data-module="0">📥 素材准备</div>
+  <div class="module-tab" data-module="1">🎬 内容创作</div>
+  <div class="module-tab" data-module="2">🚀 生产发布</div>
 </div>
 
-<!-- 面板0-2: 单工作流 -->
-<div class="panel" id="panel0">
-  <div class="card">
-    <label id="singleLabel">📋 原始文案</label>
-    <textarea id="singleInput" placeholder="把你想改写的文案粘贴到这里..."></textarea>
-    <div class="hint" id="singleHint">输入原始文案，AI自动改写成抖音风格，并生成标题和话题标签</div>
-    <button class="main" id="singleBtn" onclick="runSingle()">🚀 开始生成</button>
-    <div class="error" id="singleError"></div>
-    <div class="loading" id="singleLoading"><span class="spinner"></span>AI 生成中...</div>
-    <div id="singleResults"></div>
-  </div>
+<!-- 模块0：素材准备 子标签 -->
+<div class="sub-tabs" id="subBar0">
+  <div class="sub-tab active" data-sub="0">🔗 链接抓取</div>
+  <div class="sub-tab" data-sub="1">📊 数据监控</div>
+</div>
+<!-- 模块1：内容创作 子标签 -->
+<div class="sub-tabs" id="subBar1" style="display:none">
+  <div class="sub-tab active" data-sub="0">✍️ 文案改写</div>
+  <div class="sub-tab" data-sub="1">🎙️ 口播脚本</div>
+  <div class="sub-tab" data-sub="2">📺 直播话术</div>
+  <div class="sub-tab" data-sub="3">⚡ 三合一</div>
+  <div class="sub-tab" data-sub="4">📦 批量处理</div>
+</div>
+<!-- 模块2：生产发布 子标签 -->
+<div class="sub-tabs" id="subBar2" style="display:none">
+  <div class="sub-tab active" data-sub="0">🎬 视频处理</div>
+  <div class="sub-tab" data-sub="1">🚀 一键成片</div>
+  <div class="sub-tab" data-sub="2">📋 历史记录</div>
 </div>
 
-<!-- 面板3: 三合一 -->
-<div class="panel" id="panel3" style="display:none">
-  <div class="card">
-    <label>📦 产品信息</label>
-    <textarea id="threeInput" placeholder="输入产品信息，同时生成文案改写+口播脚本+直播话术"></textarea>
-    <div class="hint">一次输入，三种内容同时生成</div>
-    <button class="main" id="threeBtn" onclick="runThree()">⚡ 一键生成三合一</button>
-    <div class="error" id="threeError"></div>
-    <div class="progress-bar" id="threeProgress"><div class="progress-fill" id="threeFill"></div></div>
-    <div id="threeStatus" style="margin:12px 0;display:none">
-      <div class="status-row"><span class="status-dot dot-wait" id="threeDot0"></span><span class="status-label">✍️ 文案改写</span></div>
-      <div class="status-row"><span class="status-dot dot-wait" id="threeDot1"></span><span class="status-label">🎙️ 口播脚本</span></div>
-      <div class="status-row"><span class="status-dot dot-wait" id="threeDot2"></span><span class="status-label">📺 直播话术</span></div>
-    </div>
-  </div>
-  <div id="threeResults"></div>
-</div>
+<div class="panel-wrapper">
 
-<!-- 面板4: 批量 -->
-<div class="panel" id="panel4" style="display:none">
-  <div class="card">
-    <label>📦 多产品输入（每行一条）</label>
-    <textarea id="multiInput" style="min-height:160px" placeholder="儿童编程课，6-12岁，名师授课，限时8折&#10;亲子阅读绘本，0-6岁，全套50册，原价199现价99&#10;家庭教育课程，解决孩子拖延磨蹭，7天见效"></textarea>
-    <div class="hint">每行一个产品，逐条生成口播脚本</div>
-    <button class="main" id="multiBtn" onclick="runMulti()">📦 批量生成</button>
-    <div class="error" id="multiError"></div>
-    <div class="progress-bar" id="multiProgress"><div class="progress-fill" id="multiFill"></div></div>
-    <div id="multiStatus" style="margin:12px 0;font-size:13px;color:#888"></div>
-  </div>
-  <div id="multiResults"></div>
-</div>
-
-<!-- 面板5: 历史 -->
-<div class="panel" id="panel5" style="display:none">
-  <div class="card">
-    <div class="section-title">📋 历史记录<button class="clear-btn" onclick="clearHistory()">清空</button></div>
-    <div id="historyList"><div class="empty">暂无历史记录</div></div>
-  </div>
-</div>
-
-<!-- 面板6: 链接抓取 -->
-<div class="panel" id="panel6" style="display:none">
+<!-- ========== 模块0：素材准备 ========== -->
+<!-- 子0：链接抓取（原panel6） -->
+<div class="panel" id="panel_m0s0">
   <div class="card">
     <label>🔗 抖音视频链接</label>
     <textarea id="dyUrl" placeholder="粘贴抖音视频链接或分享链接...&#10;例如：https://v.douyin.com/xxxxx&#10;或：https://www.douyin.com/video/xxxxx"></textarea>
@@ -170,9 +174,9 @@ button.main:disabled{opacity:.5;cursor:not-allowed}
         <div class="result-text" id="dyDesc" style="max-height:200px;overflow-y:auto"></div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="main" style="flex:1;min-width:140px;font-size:13px;padding:12px" onclick="sendToTab(0)">✍️ 发送到文案改写</button>
-        <button class="main" style="flex:1;min-width:140px;font-size:13px;padding:12px" onclick="sendToTab(1)">🎙️ 发送到口播脚本</button>
-        <button class="main" style="flex:1;min-width:140px;font-size:13px;padding:12px" onclick="sendToTab(2)">📺 发送到直播话术</button>
+        <button class="main" style="flex:1;min-width:140px;font-size:13px;padding:12px" onclick="sendToWorkflow('copywriting')">✍️ 发送到文案改写</button>
+        <button class="main" style="flex:1;min-width:140px;font-size:13px;padding:12px" onclick="sendToWorkflow('script')">🎙️ 发送到口播脚本</button>
+        <button class="main" style="flex:1;min-width:140px;font-size:13px;padding:12px" onclick="sendToWorkflow('livestream')">📺 发送到直播话术</button>
       </div>
     </div>
     <!-- 评论区 -->
@@ -189,8 +193,8 @@ button.main:disabled{opacity:.5;cursor:not-allowed}
   </div>
 </div>
 
-<!-- 面板7: 数据监控 -->
-<div class="panel" id="panel7" style="display:none">
+<!-- 子1：数据监控（原panel7） -->
+<div class="panel" id="panel_m0s1" style="display:none">
   <div class="card">
     <div class="section-title">➕ 添加监控</div>
     <textarea id="monitorUrl" placeholder="粘贴抖音视频链接..."></textarea>
@@ -209,24 +213,69 @@ button.main:disabled{opacity:.5;cursor:not-allowed}
   </div>
 </div>
 
-<div class="panel" id="panel8" style="display:none">
+<!-- ========== 模块1：内容创作 ========== -->
+<!-- 子0-2：单工作流（共用panel，原panel0） -->
+<div class="panel" id="panel_m1s0" style="display:none">
+  <div class="card">
+    <label id="singleLabel">📋 原始文案</label>
+    <textarea id="singleInput" placeholder="把你想改写的文案粘贴到这里..."></textarea>
+    <div class="hint" id="singleHint">输入原始文案，AI自动改写成抖音风格，并生成标题和话题标签</div>
+    <button class="main" id="singleBtn" onclick="runSingle()">🚀 开始生成</button>
+    <div class="error" id="singleError"></div>
+    <div class="loading" id="singleLoading"><span class="spinner"></span>AI 生成中...</div>
+    <div id="singleResults"></div>
+  </div>
+</div>
+
+<!-- 子3：三合一（原panel3） -->
+<div class="panel" id="panel_m1s3" style="display:none">
+  <div class="card">
+    <label>📦 产品信息</label>
+    <textarea id="threeInput" placeholder="输入产品信息，同时生成文案改写+口播脚本+直播话术"></textarea>
+    <div class="hint">一次输入，三种内容同时生成</div>
+    <button class="main" id="threeBtn" onclick="runThree()">⚡ 一键生成三合一</button>
+    <div class="error" id="threeError"></div>
+    <div class="progress-bar" id="threeProgress"><div class="progress-fill" id="threeFill"></div></div>
+    <div id="threeStatus" style="margin:12px 0;display:none">
+      <div class="status-row"><span class="status-dot dot-wait" id="threeDot0"></span><span class="status-label">✍️ 文案改写</span></div>
+      <div class="status-row"><span class="status-dot dot-wait" id="threeDot1"></span><span class="status-label">🎙️ 口播脚本</span></div>
+      <div class="status-row"><span class="status-dot dot-wait" id="threeDot2"></span><span class="status-label">📺 直播话术</span></div>
+    </div>
+  </div>
+  <div id="threeResults"></div>
+</div>
+
+<!-- 子4：批量（原panel4） -->
+<div class="panel" id="panel_m1s4" style="display:none">
+  <div class="card">
+    <label>📦 多产品输入（每行一条）</label>
+    <textarea id="multiInput" style="min-height:160px" placeholder="儿童编程课，6-12岁，名师授课，限时8折&#10;亲子阅读绘本，0-6岁，全套50册，原价199现价99&#10;家庭教育课程，解决孩子拖延磨蹭，7天见效"></textarea>
+    <div class="hint">每行一个产品，逐条生成口播脚本</div>
+    <button class="main" id="multiBtn" onclick="runMulti()">📦 批量生成</button>
+    <div class="error" id="multiError"></div>
+    <div class="progress-bar" id="multiProgress"><div class="progress-fill" id="multiFill"></div></div>
+    <div id="multiStatus" style="margin:12px 0;font-size:13px;color:#888"></div>
+  </div>
+  <div id="multiResults"></div>
+</div>
+
+<!-- ========== 模块2：生产发布 ========== -->
+<!-- 子0：视频处理（原panel8） -->
+<div class="panel" id="panel_m2s0" style="display:none">
   <div class="card">
     <div class="section-title">🔗 粘贴抖音链接</div>
     <textarea id="vpUrl" placeholder="粘贴抖音分享链接，如 https://v.douyin.com/xxx/"></textarea>
     <button class="main" id="vpStartBtn" onclick="startVideoProcess()">🚀 一键处理</button>
     <div class="error" id="vpError"></div>
   </div>
-
   <div class="card" id="vpStep1Card" style="display:none">
     <div class="status-row"><span class="status-label"><span class="status-dot" id="vpDot1"></span>步骤1：解析视频</span><span id="vpStep1Status"></span></div>
     <div id="vpStep1Info" style="margin-top:8px;font-size:13px;color:#ccc"></div>
   </div>
-
   <div class="card" id="vpStep2Card" style="display:none">
     <div class="status-row"><span class="status-label"><span class="status-dot" id="vpDot2"></span>步骤2：提取封面</span><span id="vpStep2Status"></span></div>
     <div id="vpCovers" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px"></div>
   </div>
-
   <div class="card" id="vpStep3Card" style="display:none">
     <div class="status-row"><span class="status-label"><span class="status-dot" id="vpDot3"></span>步骤3：生成字幕</span><span id="vpStep3Status"></span></div>
     <div id="vpSubtitleText" style="margin-top:8px;font-size:14px;color:#eee;line-height:1.8;white-space:pre-wrap"></div>
@@ -235,10 +284,9 @@ button.main:disabled{opacity:.5;cursor:not-allowed}
       <button class="comment-send" onclick="sendToWorkflow('script')" style="padding:8px 14px;font-size:13px">🎙️ 发送到口播脚本</button>
     </div>
   </div>
-
   <div class="card" id="vpStep4Card" style="display:none">
     <div class="status-row"><span class="status-label"><span class="status-dot" id="vpDot4"></span>步骤4：生成语音</span><span id="vpStep4Status"></span></div>
-    <select id="vpVoice" style="margin-top:10px;background:#0f0f0f;color:#fff;border:1px solid #333;border-radius:8px;padding:8px;width:100%;font-size:14px">
+    <select id="vpVoice" style="margin-top:10px">
       <option>晓晓（女，温柔）</option>
       <option>云扬（男，专业）</option>
       <option>晓伊（女，活泼）</option>
@@ -251,6 +299,62 @@ button.main:disabled{opacity:.5;cursor:not-allowed}
   </div>
 </div>
 
+<!-- 子1：一键成片（新增） -->
+<div class="panel" id="panel_m2s1" style="display:none">
+  <div class="card">
+    <div class="section-title">🔗 抖音视频链接</div>
+    <textarea id="acUrl" placeholder="粘贴抖音分享链接..."></textarea>
+  </div>
+  <div class="card">
+    <div class="section-title">⚙️ 选项设置</div>
+    <label style="margin-top:8px">🎤 AI配音</label>
+    <select id="acVoice">
+      <option selected>晓晓（女，温柔）</option>
+      <option>云扬（男，专业）</option>
+      <option>晓伊（女，活泼）</option>
+      <option>云夏（男，年轻）</option>
+      <option>云希（男，阳光）</option>
+    </select>
+    <label style="margin-top:12px">🎵 背景音乐</label>
+    <select id="acBgm">
+      <option selected>轻快活泼</option>
+      <option>激情</option>
+      <option>舒缓</option>
+      <option>轻快</option>
+    </select>
+    <label style="margin-top:12px">🔊 BGM音量：<span id="acVolLabel">15%</span></label>
+    <input type="range" id="acBgmVol" min="0" max="100" value="15" oninput="document.getElementById('acVolLabel').textContent=this.value+'%'">
+  </div>
+  <button class="main" id="acBtn" onclick="startAutoCreate()">🚀 一键成片</button>
+  <div class="error" id="acError"></div>
+
+  <div class="card" id="acSteps" style="display:none">
+    <div class="section-title">📊 处理进度</div>
+    <div id="acStepList"></div>
+    <div class="progress-bar" id="acProgress"><div class="progress-fill" id="acFill"></div></div>
+    <div id="acStatus" style="font-size:13px;color:#888;margin-top:8px;text-align:center"></div>
+  </div>
+
+  <div class="card" id="acResult" style="display:none">
+    <div class="section-title">✅ 成片结果</div>
+    <div id="acResultInfo" style="font-size:13px;color:#ccc;margin-bottom:12px"></div>
+    <video id="acVideoPlayer" controls style="width:100%;border-radius:10px;background:#000" onerror="this.style.display='none'"></video>
+    <div id="acFallback" style="display:none;margin-top:8px">
+      <a id="acDownloadLink" href="#" target="_blank" class="main" style="display:inline-block;text-align:center;text-decoration:none;width:auto;padding:10px 20px">📥 下载成品视频</a>
+    </div>
+  </div>
+</div>
+
+<!-- 子2：历史记录（原panel5） -->
+<div class="panel" id="panel_m2s2" style="display:none">
+  <div class="card">
+    <div class="section-title">📋 历史记录<button class="clear-btn" onclick="clearHistory()">清空</button></div>
+    <div id="historyList"><div class="empty">暂无历史记录</div></div>
+  </div>
+</div>
+
+</div><!-- panel-wrapper -->
+
 <script>
 var HOST = window.location.hostname;
 var API_URL = "http://"+HOST+"/v1/workflows/run";
@@ -261,46 +365,131 @@ var CONFIGS = [
   {key:"app-Q9nuwRHknypA2phViOwSxCR5", name:"口播脚本", inputVar:"product_info", outputs:[{v:"script", label:"🎙️ 口播脚本"}], label:"📦 产品信息", ph:"描述你的产品：名称、功能、卖点、价格、目标人群...", hint:"输入产品信息，AI生成30秒口播脚本"},
   {key:"app-KX1NL4ioTWgEcaPAibpZCptv", name:"直播话术", inputVar:"product_info", outputs:[{v:"live_script", label:"📺 直播话术"}], label:"📦 产品信息", ph:"描述你的产品：名称、功能、卖点、价格、促销活动...", hint:"输入产品信息，AI生成完整直播话术"}
 ];
-var currentTab = 0;
 
-// === Tab 切换 ===
-function switchTab(idx) {
-  currentTab = idx;
-  var tabs = document.querySelectorAll("#tabBar .tab");
-  tabs.forEach(function(t,i){ t.classList.toggle("active", i===idx); });
-  for(var i=0;i<9;i++) {
-    var p = document.getElementById("panel"+i);
-    if(p) {
-      if(i===0) {
-        p.style.display = (idx<=2) ? "" : "none";
-      } else {
-        p.style.display = (i===idx) ? "" : "none";
-      }
+var currentModule = 0;
+var currentSub = 0;
+
+// === 通用超时 fetch ===
+async function fetchWithTimeout(url, options, timeoutMs) {
+  options = options || {};
+  timeoutMs = timeoutMs || 90000;
+  var controller = new AbortController();
+  var timer = setTimeout(function(){ controller.abort(); }, timeoutMs);
+  try {
+    var res = await fetch(url, Object.assign({}, options, {signal: controller.signal}));
+    clearTimeout(timer);
+    return res;
+  } catch(e) {
+    clearTimeout(timer);
+    if (e.name === 'AbortError') {
+      throw new Error('请求超时，请检查网络或稍后重试');
+    }
+    throw e;
+  }
+}
+
+// === 模块切换 ===
+function switchModule(moduleIdx, subIdx) {
+  currentModule = moduleIdx;
+  currentSub = (subIdx !== undefined) ? subIdx : 0;
+
+  // 更新模块Tab高亮
+  document.querySelectorAll("#moduleBar .module-tab").forEach(function(t,i){
+    t.classList.toggle("active", i === moduleIdx);
+  });
+
+  // 显示/隐藏子标签栏
+  for(var m=0; m<3; m++) {
+    var sb = document.getElementById("subBar"+m);
+    if(sb) sb.style.display = (m === moduleIdx) ? "" : "none";
+  }
+
+  // 更新子标签高亮
+  var subBar = document.getElementById("subBar"+moduleIdx);
+  if(subBar) {
+    subBar.querySelectorAll(".sub-tab").forEach(function(t,i){
+      t.classList.toggle("active", i === currentSub);
+    });
+  }
+
+  // 隐藏所有面板
+  document.querySelectorAll(".panel").forEach(function(p){ p.style.display = "none"; });
+
+  // 显示目标面板（模块1子0-2 共用 panel_m1s0）
+  var panelId;
+  if(moduleIdx === 1 && currentSub <= 2) {
+    panelId = "panel_m1s0";
+  } else {
+    panelId = "panel_m"+moduleIdx+"s"+currentSub;
+  }
+  var panel = document.getElementById(panelId);
+  if(panel) panel.style.display = "";
+
+  // 单工作流面板（模块1子0-2 共享）更新配置
+  if(moduleIdx === 1 && currentSub <= 2) {
+    var cfg = CONFIGS[currentSub];
+    document.getElementById("singleLabel").textContent = cfg.label;
+    document.getElementById("singleInput").placeholder = cfg.ph;
+    document.getElementById("singleHint").textContent = cfg.hint;
+    document.getElementById("singleInput").value = "";
+    document.getElementById("singleResults").innerHTML = "";
+    document.getElementById("singleError").style.display = "none";
+    document.getElementById("singleLoading").style.display = "none";
+  }
+
+  // 加载历史
+  if(moduleIdx === 2 && currentSub === 2) loadHistory();
+  // 加载监控
+  if(moduleIdx === 0 && currentSub === 1) loadMonitor();
+}
+
+// 模块Tab点击
+document.getElementById("moduleBar").addEventListener("click", function(e){
+  var t = e.target.closest(".module-tab");
+  if(t) switchModule(parseInt(t.dataset.module));
+});
+
+// 子标签点击
+for(var m=0; m<3; m++) {
+  (function(mIdx){
+    var bar = document.getElementById("subBar"+mIdx);
+    if(bar) {
+      bar.addEventListener("click", function(e){
+        var t = e.target.closest(".sub-tab");
+        if(t) switchModule(mIdx, parseInt(t.dataset.sub));
+      });
+    }
+  })(m);
+}
+
+// === 发送到工作流（跨模块跳转） ===
+function sendToWorkflow(type) {
+  var subIdx = type === "copywriting" ? 0 : type === "script" ? 1 : 2;
+  var text = "";
+
+  if(type === "copywriting" || type === "script" || type === "livestream") {
+    // 从链接抓取或视频处理面板获取文本
+    if(typeof dyResultCache !== "undefined" && dyResultCache && dyResultCache.desc) {
+      text = dyResultCache.desc;
+    }
+    if(!text && typeof vpSubtitleText !== "undefined" && vpSubtitleText) {
+      text = vpSubtitleText;
     }
   }
-  if(idx===0||idx===1||idx===2) {
-    var cfg=CONFIGS[idx];
-    document.getElementById("singleLabel").textContent=cfg.label;
-    document.getElementById("singleInput").placeholder=cfg.ph;
-    document.getElementById("singleHint").textContent=cfg.hint;
-    document.getElementById("singleInput").value="";
-    document.getElementById("singleResults").innerHTML="";
-    document.getElementById("singleError").style.display="none";
-    document.getElementById("singleLoading").style.display="none";
+
+  switchModule(1, subIdx);
+  if(text) {
+    setTimeout(function(){
+      document.getElementById("singleInput").value = text;
+    }, 100);
   }
-  if(idx===5) loadHistory();
-  if(idx===7) loadMonitor();
 }
-document.getElementById("tabBar").addEventListener("click", function(e){
-  var t = e.target.closest(".tab");
-  if(t) switchTab(parseInt(t.dataset.idx));
-});
 
 // === 单工作流 ===
 async function runSingle() {
   var text = document.getElementById("singleInput").value.trim();
   if(!text) { showErr("singleError","请先输入内容"); return; }
-  var cfg = CONFIGS[currentTab];
+  var cfg = CONFIGS[currentSub];
   var btn = document.getElementById("singleBtn");
   btn.disabled=true; btn.textContent="生成中...";
   hideErr("singleError");
@@ -309,11 +498,11 @@ async function runSingle() {
   try {
     var payload = { inputs:{}, response_mode:"blocking", user:"web-user" };
     payload.inputs[cfg.inputVar] = text;
-    var res = await fetch(API_URL, {
+    var res = await fetchWithTimeout(API_URL, {
       method:"POST",
       headers:{"Authorization":"Bearer "+cfg.key,"Content-Type":"application/json"},
       body:JSON.stringify(payload)
-    });
+    }, 60000);
     var data = await res.json();
     var outputs = data.data && data.data.outputs;
     if(!outputs) throw new Error("返回数据异常");
@@ -367,11 +556,11 @@ async function runThree() {
       try {
         var payload = { inputs:{}, response_mode:"blocking", user:"web-user" };
         payload.inputs[cfg.inputVar] = text;
-        var res = await fetch(API_URL, {
+        var res = await fetchWithTimeout(API_URL, {
           method:"POST",
           headers:{"Authorization":"Bearer "+cfg.key,"Content-Type":"application/json"},
           body:JSON.stringify(payload)
-        });
+        }, 60000);
         var data = await res.json();
         var outputs = data.data && data.data.outputs;
         if(!outputs) throw new Error("返回异常");
@@ -425,7 +614,7 @@ async function runMulti() {
   bar.style.display="block"; fill.style.width="0";
 
   var results = [];
-  var cfg = CONFIGS[1]; // 口播脚本
+  var cfg = CONFIGS[1];
 
   for(var i=0; i<lines.length; i++) {
     var line = lines[i].trim();
@@ -433,11 +622,11 @@ async function runMulti() {
     try {
       var payload = { inputs:{}, response_mode:"blocking", user:"web-user" };
       payload.inputs[cfg.inputVar] = line;
-      var res = await fetch(API_URL, {
+      var res = await fetchWithTimeout(API_URL, {
         method:"POST",
         headers:{"Authorization":"Bearer "+cfg.key,"Content-Type":"application/json"},
         body:JSON.stringify(payload)
-      });
+      }, 60000);
       var data = await res.json();
       var outputs = data.data && data.data.outputs;
       if(outputs) {
@@ -470,7 +659,7 @@ async function runMulti() {
 
 // === 历史记录 ===
 function loadHistory() {
-  fetch(SERVER_URL+"/api/history")
+  fetchWithTimeout(SERVER_URL+"/api/history", {}, 30000)
     .then(function(r){ return r.json(); })
     .then(function(data){
       var el = document.getElementById("historyList");
@@ -497,16 +686,16 @@ function saveHistory(template, input, outputs, outDefs) {
   var sb = [];
   outDefs.forEach(function(o){ if(outputs[o.v]) sb.push(outputs[o.v]); });
   var outputStr = sb.join("\n\n");
-  fetch(SERVER_URL+"/api/history", {
+  fetchWithTimeout(SERVER_URL+"/api/history", {
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({template:template, input:input, output:outputStr})
-  }).catch(function(){});
+  }, 30000).catch(function(){});
 }
 
 async function clearHistory() {
   if(!confirm("确定清空所有历史记录？")) return;
-  try { await fetch(SERVER_URL+"/api/history/clear"); } catch(e){}
+  try { await fetchWithTimeout(SERVER_URL+"/api/history/clear", {}, 30000); } catch(e){}
   loadHistory();
 }
 
@@ -552,7 +741,7 @@ async function parseDouyin() {
   dyResultCache = null;
   try {
     var api = SERVER_URL+"/api/douyin/parse?url="+encodeURIComponent(url);
-    var res = await fetch(api);
+    var res = await fetchWithTimeout(api, {}, 30000);
     var data = await res.json();
     document.getElementById("dyLoading").style.display="none";
     if(!data.success) throw new Error(data.error||"解析失败");
@@ -561,7 +750,6 @@ async function parseDouyin() {
     document.getElementById("dyAuthor").textContent = "👤 "+esc(data.author||"未知作者");
     document.getElementById("dyDesc").textContent = data.desc||"";
     document.getElementById("dyResult").style.display="block";
-    // 显示评论区模块，重置状态
     document.getElementById("dyCommentSection").style.display="block";
     document.getElementById("commentList").innerHTML="";
     document.getElementById("commentStats").textContent="";
@@ -573,14 +761,6 @@ async function parseDouyin() {
     showErr("dyError","解析失败："+e.message);
   }
   btn.disabled=false; btn.textContent="🔍 提取文案";
-}
-
-function sendToTab(targetIdx) {
-  if(!dyResultCache || !dyResultCache.desc) return;
-  switchTab(targetIdx);
-  document.getElementById("singleInput").value = dyResultCache.desc;
-  // 滚动到输入框
-  document.getElementById("singleInput").scrollIntoView({behavior:"smooth"});
 }
 
 // === 评论模块 ===
@@ -610,7 +790,7 @@ function loadMoreComments() {
 }
 
 function fetchComments(url, cursor) {
-  fetch(SERVER_URL+"/api/douyin/comments?url="+encodeURIComponent(url)+"&cursor="+cursor)
+  fetchWithTimeout(SERVER_URL+"/api/douyin/comments?url="+encodeURIComponent(url)+"&cursor="+cursor, {}, 30000)
     .then(function(r){ return r.json(); })
     .then(function(data){
       document.getElementById("commentLoading").style.display="none";
@@ -662,10 +842,10 @@ function sendCommentToDify(idx) {
   if(idx < 0 || idx >= allComments.length) return;
   var text = allComments[idx].text;
   if(!text) return;
-  // 发送到口播脚本（tab 1）
-  switchTab(1);
-  document.getElementById("singleInput").value = text;
-  document.getElementById("singleInput").scrollIntoView({behavior:"smooth"});
+  switchModule(1, 1); // 口播脚本
+  setTimeout(function(){
+    document.getElementById("singleInput").value = text;
+  }, 100);
 }
 
 function copyAllComments() {
@@ -681,7 +861,7 @@ function copyAllComments() {
 
 // === 数据监控模块 ===
 function loadMonitor() {
-  fetch(SERVER_URL+"/api/monitor/list")
+  fetchWithTimeout(SERVER_URL+"/api/monitor/list", {}, 30000)
     .then(function(r){ return r.json(); })
     .then(function(data){
       var el = document.getElementById("monitorList");
@@ -714,11 +894,11 @@ function addMonitor() {
   var url = document.getElementById("monitorUrl").value.trim();
   if(!url) { showErr("monitorError","请粘贴抖音链接"); return; }
   hideErr("monitorError");
-  fetch(SERVER_URL+"/api/monitor/add", {
+  fetchWithTimeout(SERVER_URL+"/api/monitor/add", {
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({url:url, title:""})
-  }).then(function(r){ return r.json(); })
+  }, 30000).then(function(r){ return r.json(); })
     .then(function(data){
       if(data.success) {
         document.getElementById("monitorUrl").value="";
@@ -730,31 +910,31 @@ function addMonitor() {
 }
 
 function refreshMonitor(id) {
-  fetch(SERVER_URL+"/api/monitor/refresh", {
+  fetchWithTimeout(SERVER_URL+"/api/monitor/refresh", {
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({id:id})
-  }).then(function(r){ return r.json(); })
+  }, 30000).then(function(r){ return r.json(); })
     .then(function(){ loadMonitor(); });
 }
 
 function refreshAllMonitors() {
-  fetch(SERVER_URL+"/api/monitor/refresh_all")
+  fetchWithTimeout(SERVER_URL+"/api/monitor/refresh_all", {}, 30000)
     .then(function(){ loadMonitor(); });
 }
 
 function removeMonitor(id) {
   if(!confirm("确定删除该监控？")) return;
-  fetch(SERVER_URL+"/api/monitor/remove", {
+  fetchWithTimeout(SERVER_URL+"/api/monitor/remove", {
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({id:id})
-  }).then(function(r){ return r.json(); })
+  }, 30000).then(function(r){ return r.json(); })
     .then(function(){ loadMonitor(); });
 }
 
 function showTrend(id) {
-  fetch(SERVER_URL+"/api/monitor/list")
+  fetchWithTimeout(SERVER_URL+"/api/monitor/list", {}, 30000)
     .then(function(r){ return r.json(); })
     .then(function(data){
       var v = data.find(function(item){ return item.id===id; });
@@ -797,14 +977,13 @@ async function startVideoProcess() {
   document.getElementById("vpStartBtn").disabled = true;
   document.getElementById("vpStartBtn").textContent = "处理中...";
 
-  // Show step cards
   ["vpStep1Card","vpStep2Card","vpStep3Card","vpStep4Card"].forEach(function(id){ document.getElementById(id).style.display=""; });
   ["vpStep1Info","vpStep2Status","vpStep3Status","vpStep4Status","vpSubtitleText","vpCovers","vpAudioPlayer"].forEach(function(id){ document.getElementById(id).innerHTML=""; });
 
   // Step 1: 解析+下载
   setDot("vpDot1","run"); document.getElementById("vpStep1Status").textContent="解析中...";
   try {
-    var r1 = await fetch(SERVER_URL+"/api/douyin/download?url="+encodeURIComponent(url));
+    var r1 = await fetchWithTimeout(SERVER_URL+"/api/douyin/download?url="+encodeURIComponent(url), {}, 120000);
     var d1 = await r1.json();
     if(!d1.success) throw new Error(d1.error||"解析失败");
     vpVideoPath = d1.video_path;
@@ -818,17 +997,17 @@ async function startVideoProcess() {
   // Step 2: 提取封面
   setDot("vpDot2","run"); document.getElementById("vpStep2Status").textContent="提取中...";
   try {
-    var r2 = await fetch(SERVER_URL+"/api/cover", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({video_path:vpVideoPath})});
+    var r2 = await fetchWithTimeout(SERVER_URL+"/api/cover", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({video_path:vpVideoPath})}, 60000);
     var d2 = await r2.json();
     if(!d2.success) throw new Error(d2.error||"封面提取失败");
     setDot("vpDot2","ok"); document.getElementById("vpStep2Status").textContent="✅ "+d2.covers.length+"张";
     var coverHtml = "";
     d2.covers.forEach(function(c,i){
       var label = c.label||("候选"+(i+1));
-      coverHtml += '<div style="text-align:center;max-width:160px">'+
-        '<img src="'+c.path+'" style="width:100%;border-radius:8px;border:1px solid #333" onerror="this.style.display=\'none\'">'+
+      coverHtml += '<div class="cover-item" id="coverItem'+i+'" onclick="selectCover('+i+',\''+c.path+'\')">'+
+        '<img src="'+c.path+'" onerror="this.style.display=\'none\'">'+
         '<div style="font-size:11px;color:#888;margin:4px 0">'+esc(label)+' ('+c.time+'s)</div>'+
-        '<button onclick="selectCover(\''+c.path+'\')" style="background:#2a2a2a;border:none;color:#aaa;padding:3px 10px;border-radius:5px;font-size:11px;cursor:pointer">✅ 选为封面</button>'+
+        '<button class="cover-sel-btn" id="coverBtn'+i+'" style="background:#2a2a2a;border:none;color:#aaa;padding:3px 10px;border-radius:5px;font-size:11px;cursor:pointer;pointer-events:none">选为封面</button>'+
         '</div>';
     });
     document.getElementById("vpCovers").innerHTML = coverHtml;
@@ -839,7 +1018,7 @@ async function startVideoProcess() {
   // Step 3: 生成字幕
   setDot("vpDot3","run"); document.getElementById("vpStep3Status").textContent="Whisper转写中...";
   try {
-    var r3 = await fetch(SERVER_URL+"/api/subtitle", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({video_path:vpVideoPath})});
+    var r3 = await fetchWithTimeout(SERVER_URL+"/api/subtitle", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({video_path:vpVideoPath})}, 180000);
     var d3 = await r3.json();
     if(!d3.success) throw new Error(d3.error||"字幕生成失败");
     vpSubtitleText = d3.text||"";
@@ -854,13 +1033,24 @@ async function startVideoProcess() {
   document.getElementById("vpStartBtn").textContent = "🚀 一键处理";
 }
 
-function selectCover(path) { alert("已选择封面: "+path); }
-
-function sendToWorkflow(type) {
-  if(!vpSubtitleText) { alert("请先生成字幕"); return; }
-  switchTab(type==="copywriting"?0:1);
-  document.getElementById("singleInput").value = vpSubtitleText;
-  setTimeout(function(){ window.scrollTo(0,0); }, 200);
+var selectedCoverPath = null;
+function selectCover(idx, path) {
+  // 清除所有选中状态
+  document.querySelectorAll(".cover-item").forEach(function(el,i){
+    el.classList.remove("selected");
+    var btn = document.getElementById("coverBtn"+i);
+    if(btn) btn.textContent = "选为封面";
+  });
+  // 切换当前
+  if(selectedCoverPath === path) {
+    selectedCoverPath = null;
+  } else {
+    var item = document.getElementById("coverItem"+idx);
+    if(item) item.classList.add("selected");
+    var btn = document.getElementById("coverBtn"+idx);
+    if(btn) btn.textContent = "✅ 已选";
+    selectedCoverPath = path;
+  }
 }
 
 async function generateVoice() {
@@ -870,7 +1060,7 @@ async function generateVoice() {
   btn.disabled = true; btn.textContent = "生成中...";
   setDot("vpDot4","run"); document.getElementById("vpStep4Status").textContent="语音合成中...";
   try {
-    var r = await fetch(SERVER_URL+"/api/tts", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:text, voice:document.getElementById("vpVoice").value})});
+    var r = await fetchWithTimeout(SERVER_URL+"/api/tts", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:text, voice:document.getElementById("vpVoice").value})}, 60000);
     var d = await r.json();
     if(!d.success) throw new Error(d.error||"生成失败");
     setDot("vpDot4","ok"); document.getElementById("vpStep4Status").textContent="✅ "+Math.round(d.size/1024)+"KB";
@@ -881,7 +1071,117 @@ async function generateVoice() {
   btn.disabled = false; btn.textContent = "🎵 生成语音";
 }
 
-switchTab(0);
+// === 一键成片 ===
+var acStepNames = [
+  "解析视频", "下载视频", "提取原文案", "AI改写文案",
+  "生成新音频", "混合BGM", "提取封面", "合成最终视频"
+];
+
+async function startAutoCreate() {
+  var url = document.getElementById("acUrl").value.trim();
+  if(!url) { showErr("acError","请粘贴抖音链接"); return; }
+  var btn = document.getElementById("acBtn");
+  btn.disabled = true; btn.textContent = "处理中...";
+  hideErr("acError");
+
+  // 显示进度面板
+  document.getElementById("acSteps").style.display = "";
+  document.getElementById("acResult").style.display = "none";
+
+  // 初始化步骤
+  var stepList = document.getElementById("acStepList");
+  stepList.innerHTML = acStepNames.map(function(name, i){
+    return '<div class="auto-step">'+
+      '<div class="auto-step-icon" id="acIcon'+i+'">⬜</div>'+
+      '<div class="auto-step-label">'+name+'</div>'+
+      '<div class="auto-step-time" id="acTime'+i+'"></div>'+
+      '<div class="auto-step-status" id="acStatus'+i+'"></div>'+
+    '</div>';
+  }).join("");
+
+  var bar = document.getElementById("acProgress");
+  var fill = document.getElementById("acFill");
+  var statusEl = document.getElementById("acStatus");
+  bar.style.display = "block"; fill.style.width = "0";
+  statusEl.textContent = "正在处理...";
+
+  function updateStep(i, state, time, msg) {
+    var icon = document.getElementById("acIcon"+i);
+    var timeEl = document.getElementById("acTime"+i);
+    var st = document.getElementById("acStatus"+i);
+    if(state === "run") { icon.textContent = "🟡"; st.className = "auto-step-status run"; st.textContent = msg||""; }
+    else if(state === "ok") { icon.textContent = "🟢"; st.className = "auto-step-status ok"; st.textContent = msg||""; if(time) timeEl.textContent = time+"s"; }
+    else { icon.textContent = "🔴"; st.className = "auto-step-status err"; st.textContent = msg||""; }
+    fill.style.width = Math.round((i+1)/8*100)+"%";
+  }
+
+  try {
+    var payload = {
+      url: url,
+      voice: document.getElementById("acVoice").value,
+      bgm: document.getElementById("acBgm").value,
+      bgm_vol: parseInt(document.getElementById("acBgmVol").value) / 100
+    };
+
+    var res = await fetchWithTimeout(SERVER_URL+"/api/auto_create", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(payload)
+    }, 300000);
+    var data = await res.json();
+
+    // 渲染步骤结果
+    if(data.steps) {
+      data.steps.forEach(function(step, i){
+        if(i < 8) {
+          var state = step.success ? "ok" : "err";
+          var msg = step.success ? "" : (step.error||"失败");
+          updateStep(i, state, step.elapsed, msg);
+        }
+      });
+    }
+
+    fill.style.width = "100%";
+    statusEl.textContent = data.success ? "✅ 全部完成！" : "❌ 处理失败";
+
+    // 显示结果
+    if(data.success && data.outputs) {
+      document.getElementById("acResult").style.display = "";
+      document.getElementById("acResultInfo").innerHTML =
+        "📹 "+esc(data.outputs.title||"")+
+        "<br>👤 "+esc(data.outputs.author||"")+
+        "<br>📝 原文: "+esc((data.outputs.original_text||"").substring(0,60))+"...";
+
+      var videoPath = data.outputs.final_video;
+      if(videoPath) {
+        var player = document.getElementById("acVideoPlayer");
+        player.src = videoPath;
+        player.style.display = "";
+        player.load();
+        document.getElementById("acDownloadLink").href = videoPath;
+        document.getElementById("acFallback").style.display = "";
+      }
+    }
+
+  } catch(e) {
+    statusEl.textContent = "❌ 请求失败："+e.message;
+    showErr("acError","请求失败："+e.message);
+  }
+  btn.disabled = false; btn.textContent = "🚀 一键成片";
+}
+
+// === 初始化 ===
+switchModule(0, 0);
+</script>
+
+<script>
+window.onerror = function(msg, src, line, col, err) {
+document.body.insertAdjacentHTML('afterbegin',
+'<div style="position:fixed;top:0;left:0;right:0;background:red;color:white;padding:10px;z-index:9999;font-size:12px">' +
+'JS错误: ' + msg + ' (第' + line + '行)' +
+'</div>');
+return false;
+};
 </script>
 </body>
 </html>
