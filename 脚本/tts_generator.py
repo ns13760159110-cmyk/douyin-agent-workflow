@@ -38,7 +38,7 @@ async def generate(text: str, voice: str = "zh-CN-XiaoxiaoNeural", output_path: 
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-def run(text: str, voice_name: str = "晓晓（女，温柔）", output_path: str = "/tmp/output_tts.mp3") -> dict:
+def run(text: str, voice_name: str = "🎀 晓晓（女，温柔）", output_path: str = "/tmp/output_tts.mp3") -> dict:
     voice = VOICES.get(voice_name, "zh-CN-XiaoxiaoNeural")
     return asyncio.run(generate(text, voice, output_path))
 

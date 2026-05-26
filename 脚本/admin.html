@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>抖音助手 · 管理后台</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#13002e;color:#e6edf3;min-height:100vh;padding:30px 16px}
+h1{font-size:22px;font-weight:700;margin-bottom:4px;color:#fff}
+.sub{color:#8b949e;font-size:13px;margin-bottom:30px}
+.card{background:#1e0a3c;border-radius:16px;padding:24px;width:100%;max-width:680px;margin:0 auto 20px;border:1px solid #2d1458}
+.card-title{font-size:15px;font-weight:700;margin-bottom:16px;color:#9f67ff}
+label{font-size:13px;color:#8b949e;margin-bottom:6px;display:block}
+input,select{width:100%;background:#13002e;border:1px solid #2d1458;border-radius:8px;color:#e6edf3;font-size:15px;padding:12px;margin-bottom:14px;outline:none}
+input:focus,select:focus{border-color:#7c3aed}
+button.main{width:100%;padding:14px;background:linear-gradient(135deg,#7c3aed,#9f67ff);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px}
+button.main:hover{opacity:0.9}
+button.main:disabled{opacity:0.5}
+.result{background:#13002e;border-radius:10px;padding:14px;margin-top:14px;border:1px solid #2d1458;display:none}
+.code-item{font-family:monospace;font-size:16px;color:#9f67ff;padding:8px 0;border-bottom:1px solid #2d1458;display:flex;justify-content:space-between;align-items:center}
+.code-item:last-child{border-bottom:none}
+.copy-btn{background:#2d1458;border:none;color:#aaa;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer}
+.copy-btn:hover{color:#fff}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0}
+.stat-item{background:#13002e;border-radius:10px;padding:16px;border:1px solid #2d1458;text-align:center}
+.stat-num{font-size:28px;font-weight:700;color:#9f67ff}
+.stat-label{font-size:12px;color:#8b949e;margin-top:4px}
+.record-item{background:#13002e;border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid #2d1458}
+.record-code{font-family:monospace;font-size:14px;color:#9f67ff;margin-bottom:4px}
+.record-meta{font-size:12px;color:#8b949e}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.badge-active{background:#1a3a1a;color:#3fb950}
+.badge-unused{background:#1a1a3a;color:#7c3aed}
+.badge-expired{background:#3a1a1a;color:#f85149}
+.admin-login{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh}
+.error{color:#f85149;font-size:13px;margin-top:8px;display:none}
+</style>
+</head>
+<body>
+<div id="loginPage" class="admin-login">
+<div style="font-size:40px;margin-bottom:12px">🔐</div>
+<h1>管理后台</h1>
+<p class="sub">请输入管理员密码</p>
+<div class="card" style="max-width:360px">
+<label>管理员密码</label>
+<div style="position:relative">
+<input type="password" id="adminPwd" placeholder="请输入密码" onkeydown="if(event.key==='Enter')adminLogin()" style="width:100%;background:#13002e;border:1px solid #2d1458;border-radius:8px;color:#e6edf3;font-size:15px;padding:12px;padding-right:44px;outline:none">
+<button onclick="togglePwd()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#8b949e;cursor:pointer;font-size:18px" id="eyeBtn">👁️</button>
+</div>
+<div class="error" id="loginError">密码错误</div>
+<button class="main" onclick="adminLogin()">🚀 进入后台</button>
+</div>
+</div>
+<div id="adminPage" style="display:none;max-width:680px;margin:0 auto">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+<h1>🎬 管理后台</h1>
+<button onclick="logout()" style="background:none;border:1px solid #2d1458;color:#8b949e;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:13px">退出</button>
+</div>
+<p class="sub">抖音智能创作助手 · 激活码管理</p>
+<!-- 统计 -->
+<div class="card">
+<div class="card-title">📊 激活码统计</div>
+<div class="stat-grid">
+<div class="stat-item"><div class="stat-num" id="statTotal">-</div><div class="stat-label">总激活码</div></div>
+<div class="stat-item"><div class="stat-num" id="statActive">-</div><div class="stat-label">使用中</div></div>
+<div class="stat-item"><div class="stat-num" id="statUnused">-</div><div class="stat-label">未激活</div></div>
+<div class="stat-item"><div class="stat-num" id="statExpired">-</div><div class="stat-label">已过期</div></div>
+</div>
+</div>
+<!-- 生成激活码 -->
+<div class="card">
+<div class="card-title">➕ 生成激活码</div>
+<label>生成数量</label>
+<input type="number" id="genCount" value="1" min="1" max="50">
+<label>有效期（天）</label>
+<input type="number" id="genDays" value="30" min="1">
+<label>套餐</label>
+<select id="genPlan">
+<option>标准版</option>
+<option>专业版</option>
+<option>企业版</option>
+</select>
+<label>渠道来源</label>
+<input type="text" id="genChannel" placeholder="如：抖音渠道、朋友介绍...">
+<label>备注</label>
+<input type="text" id="genRemark" placeholder="可选备注">
+<button class="main" id="genBtn" onclick="generateCodes()">🎟️ 生成激活码</button>
+<div class="result" id="genResult">
+<div style="font-size:13px;color:#8b949e;margin-bottom:10px">生成结果（点击复制）：</div>
+<div id="codeList"></div>
+<button class="main" style="margin-top:12px" onclick="copyAllCodes()">📋 一键复制全部</button>
+</div>
+</div>
+<!-- 激活码列表 -->
+<div class="card">
+<div class="card-title">📋 激活码列表</div>
+<div id="recordsList"><div style="text-align:center;color:#8b949e;padding:20px">加载中...</div></div>
+</div>
+</div>
+<script>
+const ADMIN_PWD = "Douyin2026!";
+const CSRFT = btoa("Douyin2026!");
+let allCodes = [];
+function togglePwd() {
+const input = document.getElementById('adminPwd');
+const btn = document.getElementById('eyeBtn');
+if (input.type === 'password') {
+input.type = 'text';
+btn.textContent = '🙈';
+} else {
+input.type = 'password';
+btn.textContent = '👁️';
+}
+}
+function adminLogin() {
+const pwd = document.getElementById('adminPwd').value;
+if (pwd === ADMIN_PWD) {
+document.getElementById('loginPage').style.display = 'none';
+document.getElementById('adminPage').style.display = 'block';
+loadStats();
+loadRecords();
+} else {
+document.getElementById('loginError').style.display = 'block';
+}
+}
+function logout() {
+document.getElementById('loginPage').style.display = 'flex';
+document.getElementById('adminPage').style.display = 'none';
+document.getElementById('adminPwd').value = '';
+}
+async function generateCodes() {
+const count = parseInt(document.getElementById('genCount').value) || 1;
+const days = parseInt(document.getElementById('genDays').value) || 30;
+const plan = document.getElementById('genPlan').value;
+const channel = document.getElementById('genChannel').value;
+const remark = document.getElementById('genRemark').value;
+const btn = document.getElementById('genBtn');
+btn.disabled = true; btn.textContent = '生成中...';
+try {
+const res = await fetch('/api/admin/gen', {
+method: 'POST',
+headers: {'Content-Type': 'application/json', 'X-Admin': CSRFT},
+body: JSON.stringify({count, days, plan, channel, remark})
+});
+const data = await res.json();
+if (data.codes) {
+allCodes = data.codes;
+document.getElementById('genResult').style.display = 'block';
+document.getElementById('codeList').innerHTML = data.codes.map((c,i) =>
+`<div class="code-item"><span>${c}</span><button class="copy-btn" onclick="copyCode('${c}',this)">复制</button></div>`
+).join('');
+loadStats(); loadRecords();
+}
+} catch(e) { alert('生成失败: '+e.message); }
+btn.disabled = false; btn.textContent = '🎟️ 生成激活码';
+}
+function copyCode(code, btn) {
+navigator.clipboard.writeText(code).then(() => {
+btn.textContent='已复制'; setTimeout(()=>btn.textContent='复制',1500);
+});
+}
+function copyAllCodes() {
+navigator.clipboard.writeText(allCodes.join('\n')).then(() => {
+event.target.textContent='已复制✓'; setTimeout(()=>event.target.textContent='📋 一键复制全部',1500);
+});
+}
+async function loadStats() {
+try {
+const res = await fetch('/api/admin/stats', {headers:{'X-Admin':CSRFT}});
+const data = await res.json();
+document.getElementById('statTotal').textContent = data.total || 0;
+document.getElementById('statActive').textContent = data.active || 0;
+document.getElementById('statUnused').textContent = data.unused || 0;
+document.getElementById('statExpired').textContent = data.expired || 0;
+} catch(e) {}
+}
+async function loadRecords() {
+try {
+const res = await fetch('/api/admin/records', {headers:{'X-Admin':CSRFT}});
+const data = await res.json();
+const records = data.records || [];
+let html = '';
+records.forEach(r => {
+const expireStr = r['到期时间'] ? new Date(r['到期时间']).toLocaleDateString('zh-CN') : '永久';
+const statusClass = r['状态'] === '使用中' ? 'badge-active' : (r['状态'] === '未激活' || r['状态'] === '未使用' ? 'badge-unused' : 'badge-expired');
+html += `<div class="record-item">
+<div class="record-code">🎫 ${r['激活码']} <span class="badge ${statusClass}">${r['状态']||'未知'}</span></div>
+<div class="record-meta">💰 ${r['套餐']||'-'} | ⏰ 到期: ${expireStr} | 📊 ${r['已使用次数']||0}/${r['最大使用次数']||'-'}次 | 👤 ${r['使用者']||'-'} | 📱 ${r['绑定设备']||'-'}</div>
+</div>`;
+});
+document.getElementById('recordsList').innerHTML = html || '<div style="text-align:center;color:#8b949e;padding:20px">暂无激活码</div>';
+} catch(e) {}
+}
+</script>
+</body>
+</html>

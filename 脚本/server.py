@@ -13,6 +13,11 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 import bgm_mixer
 import auto_create
+import license as license_module
+import license_gen
+
+ADMIN_PWD = "123456"
+ADMIN_TOKEN = "MTIzNDU2"  # base64 of ADMIN_PWD
 
 HISTORY_FILE = "/home/aoray/抖音智能体工作流/脚本/history.json"
 STATIC_DIR = "/home/aoray/抖音智能体工作流/脚本"
@@ -35,7 +40,14 @@ class Handler(BaseHTTPRequestHandler):
     def send_cors(self):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Admin")
+
+    def send_json(self, data, status=200):
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json;charset=utf-8")
+        self.send_cors()
+        self.end_headers()
+        self.wfile.write(json.dumps(data, ensure_ascii=False).encode())
 
     def do_OPTIONS(self):
         self.send_response(200)
@@ -196,6 +208,19 @@ class Handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(content)
                 return
+            # Admin APIs
+            if path == "/api/admin/stats":
+                if self.headers.get("X-Admin") != ADMIN_TOKEN:
+                    self.send_json({"error":"未授权"}, 403); return
+                stats = license_gen.get_stats()
+                self.send_json(stats)
+                return
+            if path == "/api/admin/records":
+                if self.headers.get("X-Admin") != ADMIN_TOKEN:
+                    self.send_json({"error":"未授权"}, 403); return
+                records = license_gen.get_records()
+                self.send_json({"records":records})
+                return
             filepath = STATIC_DIR + path
             if os.path.exists(filepath) and os.path.isfile(filepath):
                 ext = filepath.split(".")[-1]
@@ -256,6 +281,39 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 self.send_response(400)
                 self.end_headers()
+        elif self.path == "/api/license/verify":
+            length = int(self.headers.get("Content-Length",0))
+            body = json.loads(self.rfile.read(length).decode())
+            code = body.get("code","")
+            device = body.get("device","")
+            result = license_module.verify_license(code, device)
+            self.send_response(200)
+            self.send_header("Content-Type","application/json;charset=utf-8")
+            self.send_cors()
+            self.end_headers()
+            self.wfile.write(json.dumps(result,ensure_ascii=False).encode())
+        elif self.path == "/api/license/check":
+            length = int(self.headers.get("Content-Length",0))
+            body = json.loads(self.rfile.read(length).decode())
+            code = body.get("code","")
+            result = license_module.check_session(code)
+            self.send_response(200)
+            self.send_header("Content-Type","application/json;charset=utf-8")
+            self.send_cors()
+            self.end_headers()
+            self.wfile.write(json.dumps(result,ensure_ascii=False).encode())
+        elif self.path == "/api/admin/gen":
+            if self.headers.get("X-Admin") != ADMIN_TOKEN:
+                self.send_json({"error":"未授权"}, 403); return
+            length = int(self.headers.get("Content-Length",0))
+            body = json.loads(self.rfile.read(length).decode())
+            count = int(body.get("count",1))
+            days = int(body.get("days",30))
+            plan = body.get("plan","标准版")
+            channel = body.get("channel","")
+            remark = body.get("remark","")
+            codes = license_gen.create_license(plan=plan, days=days, count=count, channel=channel, remark=remark)
+            self.send_json({"codes":codes})
         elif self.path == "/api/auto_create":
             length = int(self.headers.get("Content-Length", 0))
             body = json.loads(self.rfile.read(length).decode())
