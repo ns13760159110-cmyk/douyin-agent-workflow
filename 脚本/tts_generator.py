@@ -6,14 +6,27 @@ import json
 import sys
 
 VOICES = {
-    "晓晓（女，温柔）": "zh-CN-XiaoxiaoNeural",
-    "晓伊（女，活泼）": "zh-CN-XiaoyiNeural",
-    "云扬（男，专业）": "zh-CN-YunyangNeural",
-    "云夏（男，年轻）": "zh-CN-YunxiaNeural",
-    "云希（男，阳光）": "zh-CN-YunxiNeural",
-    "云健（男，沉稳）": "zh-CN-YunjianNeural",
-    "晓北（女，东北）": "zh-CN-liaoning-XiaobeiNeural",
-    "晓妮（女，陕西）": "zh-CN-shaanxi-XiaoniNeural",
+    "🎀 晓晓（女，温柔）": "zh-CN-XiaoxiaoNeural",
+    "🎙️ 云扬（男，专业）": "zh-CN-YunyangNeural",
+    "✨ 晓伊（女，活泼）": "zh-CN-XiaoyiNeural",
+    "🌟 云夏（男，年轻）": "zh-CN-YunxiaNeural",
+    "💫 云希（男，阳光）": "zh-CN-YunxiNeural",
+    "🔥 云建（男，磁性）": "zh-CN-YunjianNeural",
+    "🧧 东北话·小北（女）": "zh-CN-liaoning-XiaobeiNeural",
+    "🌶 陕西话·小妮（女）": "zh-CN-shaanxi-XiaoniNeural",
+    "🥮 粤语·晓佳（女）": "zh-HK-HiuGaaiNeural",
+    "🍵 粤语·晓曼（女）": "zh-HK-HiuMaanNeural",
+    "🎋 粤语·云龙（男）": "zh-HK-WanLungNeural",
+    "🌸 台湾·小晨（女）": "zh-TW-HsiaoChenNeural",
+    "🎍 台湾·允泽（男）": "zh-TW-YunJheNeural",
+    "🫧 台湾·小玉（女）": "zh-TW-HsiaoYuNeural",
+    "🇺🇸 英语·Jenny（女）": "en-US-JennyNeural",
+    "🇺🇸 英语·Guy（男）": "en-US-GuyNeural",
+    "🇬🇧 英语·Sonia（女）": "en-GB-SoniaNeural",
+    "🇯🇵 日语·Nanami（女）": "ja-JP-NanamiNeural",
+    "🇯🇵 日语·Keita（男）": "ja-JP-KeitaNeural",
+    "🇰🇷 韩语·SunHi（女）": "ko-KR-SunHiNeural",
+    "🇰🇷 韩语·InJoon（男）": "ko-KR-InJoonNeural"
 }
 
 async def generate(text: str, voice: str = "zh-CN-XiaoxiaoNeural", output_path: str = "/tmp/output_tts.mp3") -> dict:
